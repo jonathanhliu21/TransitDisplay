@@ -2,6 +2,7 @@
 #define ROUTE_TABLE_H
 
 #include <Arduino.h>
+#include <ArduinoHttpClient.h>
 
 #include <cstdint>
 #include <vector>
@@ -16,16 +17,23 @@ struct Route {
 
 class RouteTable {
 public:
-  RouteTable() = default;
+  RouteTable(HttpClient *client);
   ~RouteTable();
   
+  bool retrieveRoutes(float lat, float lon, float radius);
   Route* getRoute(const String &oneStopId) const;
-  Route* addRoute(const Route &route);
+
+  void debugPrintAllRoutes() const;
 
 private:
+  HttpClient *m_client;
+  // const std::vector<String> *m_supportedAgencies;
   std::vector<Route*> m_routes;
 
-  Route modifyRoute(const Route &route) const;
+  Route* addRoute(const Route &route);
+
+  void modifyRoute(Route &route) const;
+  String truncateRoute(const String &routeStr) const;
 };
 
 #endif

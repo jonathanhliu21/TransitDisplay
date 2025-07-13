@@ -1,6 +1,7 @@
 #include <WiFi.h>
 #include <WiFiClientSecure.h>
-#include <HTTPClient.h>
+#include <ArduinoHttpClient.h>
+#include <vector>
 
 #include "RouteTable.h"
 #include "Stop.h"
@@ -9,28 +10,7 @@
 
 WiFiClientSecure wifiClient;
 HttpClient http(wifiClient, TRANSIT_LAND_SERVER, TRANSIT_LAND_PORT);
-RouteTable routeTable;
-
-void printRoute(const Route* route) {
-  Serial.println(F("--- Route Info ---"));
-  
-  Serial.print(F("ID: "));
-  Serial.println(route->id);
-
-  Serial.print(F("Name: "));
-  Serial.println(route->name);
-
-  Serial.print(F("Line Color: 0x"));
-  Serial.println(route->lineColor, HEX);
-
-  Serial.print(F("Text Color: 0x"));
-  Serial.println(route->textColor, HEX);
-
-  Serial.print(F("Agency ID: "));
-  Serial.println(route->agencyId);
-  
-  Serial.println(F("------------------"));
-}
+RouteTable routeTable(&http);
 
 void setup()
 {
@@ -55,20 +35,26 @@ void setup()
   // set certificate for https
   wifiClient.setCACert(TRANSIT_LAND_ROOT_CERTIFICATE);
 
-  Stop westwoodRancho("s-9q5c9hjyg6-westwood~ranchoparkstation", NUM_ROUTES_STORED, &routeTable, &http);
-  Serial.println("Initializing Westwood/Rancho Park...");
-  westwoodRancho.init();
+  // ----- TESTING ----
+  // 34.036565, -118.424929 (WW/RP all stops)
+  // 34.036816, -118.424576 (WW/RP E line)
+  // 34.062591, -118.445390 (WW/WB all)
+  // 37.7928486,-122.3968361 (EMBR)
+  // routeTable.retrieveRoutes(34.036565, -118.424929, SEARCH_RADIUS);
+  routeTable.retrieveRoutes(37.7928486,-122.3968361, SEARCH_RADIUS);
+  routeTable.debugPrintAllRoutes();
 
-  Serial.println("Valid Stop: " + String(westwoodRancho.getIsValidStop()));
-  Serial.println("Stop Name: " + String(westwoodRancho.getName()));
-  Serial.println("Lat: " + String(westwoodRancho.getLat()));
-  Serial.println("Lon: " + String(westwoodRancho.getLon()));
+  // Stop westwoodRancho("s-9q5c9hjyg6-westwood~ranchoparkstation", NUM_ROUTES_STORED, &routeTable, &http);
+  // Serial.println("Initializing Westwood/Rancho Park...");
+  // westwoodRancho.init();
 
-  auto routes = westwoodRancho.getRoutes();
-  for (int i = 0; i < routes->size(); i++) {
-    Route *r = routes->at(i);
-    printRoute(r);
-  }
+  // Serial.println("Valid Stop: " + String(westwoodRancho.getIsValidStop()));
+  // Serial.println("Stop Name: " + String(westwoodRancho.getName()));
+
+  // for (int i = 0; i < routes->size(); i++) {
+  //   Route *r = routes->at(i);
+  //   printRoute(r);
+  // }
 }
 
 void loop()

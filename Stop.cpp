@@ -11,7 +11,7 @@
 
 Stop::Stop(const String &oneStopId, const int &numDepartures, RouteTable *routeTable, HttpClient *client)
   : m_id{ oneStopId }, m_numDepartures{ numDepartures }, m_routeTable{ routeTable }, m_client{ client },
-    m_lat{0}, m_lon{0}, m_isValidStop{ false }, m_lastRetrieveTime{ 0 } {
+    m_isValidStop{ false }, m_lastRetrieveTime{ 0 } {
   m_departures.reserve(m_numDepartures);
 }
 
@@ -34,19 +34,11 @@ String Stop::getAgencyId() const {
 const std::vector<Departure> *Stop::getDepartures() const {
   return &m_departures;
 }
-const std::vector<Route *> *Stop::getRoutes() const {
-  return &m_routes;
-}
-float Stop::getLat() const {return m_lat;}
-float Stop::getLon() const {return m_lon;}
 
 void Stop::init() {
   // Test cases
 
-  bool validStop = retrieveStopInfo();
-  bool validRoutes = retrieveRoutesInfo();
-
-  m_isValidStop = validStop && validRoutes;
+  m_isValidStop = retrieveStopInfo();
 }
 
 bool Stop::retrieveStopInfo() {
@@ -63,7 +55,6 @@ bool Stop::retrieveStopInfo() {
   // Create filter
   JsonDocument filter;
   filter["stops"][0]["feed_version"]["feed"]["onestop_id"] = true;
-  filter["stops"][0]["geometry"]["coordinates"] = true;
   filter["stops"][0]["stop_name"] = true;
 
   // Store response
@@ -101,90 +92,13 @@ bool Stop::retrieveStopInfo() {
     return false;
   }
   m_agencyId = stopInfo["feed_version"]["feed"]["onestop_id"].as<String>();
-  // then coords
-  if (!stopInfo["geometry"].is<JsonVariant>()
-      || !stopInfo["geometry"]["coordinates"].is<JsonArray>()
-      || stopInfo["geometry"]["coordinates"].size() < 2
-      || !stopInfo["geometry"]["coordinates"][0].is<float>()
-      || !stopInfo["geometry"]["coordinates"][1].is<float>()) {
-    Serial.println("Could not coordinates from stop");
-    return false;
-  }
-  m_lon = stopInfo["geometry"]["coordinates"][0];
-  m_lat = stopInfo["geometry"]["coordinates"][1];
 
   return true;
 }
 
-bool Stop::retrieveRoutesInfo() {
-  String endpoint = String(ROUTES_ENDPOINT_PREFIX) + "?api_key=" + SECRET_API_KEY + "&lat=" + String(m_lat, 6) + "&lon=" + String(m_lon, 6) + "&radius=" + SEARCH_RADIUS;
-  m_client->get(endpoint);
-
-  // Get the status code from the server's response
-  int statusCode = m_client->responseStatusCode();
-  if (statusCode != 200) {
-    Serial.println("Status Code for stop did not return 200");
-    return false;
-  }
-
-  // Create filter
-  JsonDocument filter;
-  JsonObject filter_routes_0 = filter["routes"].add<JsonObject>();
-  filter_routes_0["agency"]["onestop_id"] = true;
-  filter_routes_0["onestop_id"] = true;
-  filter_routes_0["route_color"] = true;
-  filter_routes_0["route_text_color"] = true;
-  filter_routes_0["route_short_name"] = true;
-  filter_routes_0["route_long_name"] = true;
-
-  // Store response
-  JsonDocument responseDoc;
-  DeserializationError error = deserializeJson(responseDoc, m_client->responseBody(), DeserializationOption::Filter(filter));
-  if (error) {
-    Serial.println("Deserialization for stop failed");
-    return false;
-  }
-    // find if routes exist
-  if (!responseDoc["routes"].is<JsonArray>()) {
-    Serial.println("routes key is not there");
-    return false;
-  }
-
-  Serial.println(responseDoc["routes"].as<JsonArray>().size());
-  // for (JsonObject routeDoc : responseDoc["routes"].as<JsonArray>()) {
-  //   // Serial.println("here!!!");
-  // }
-
-  
-  // for (JsonObject routeDoc : responseDoc["routes"].as<JsonArray>()) {
-    // Serial.println("here!!!");
-    // if (!routeDoc["onestop_id"].is<const char*>()
-    //     || !routeDoc["agency"].is<JsonVariant>()
-    //     || !routeDoc["agency"]["onestop_id"].is<const char*>()
-    //     || (!routeDoc["route_long_name"].is<const char *>() && !routeDoc["route_short_name"].is<const char *>())) {
-    //     continue;
-    // }
-
-    // Route route;
-    // route.agencyId = routeDoc["agency"]["onestop_id"].as<String>(); // "o-9q5c-bigbluebus", ...
-    // route.id = routeDoc["onestop_id"].as<String>(); // "r-9q5c8-1", "r-9q5c8-2", "r-9q5c8-8", ...
-    // if (!routeDoc["route_short_name"].is<const char*>()) {
-    //   route.name = truncateRoute(routeDoc["route_long_name"].as<String>());
-    // } else {
-    //   route.name = truncateRoute(routeDoc["route_short_name"].as<String>());
-    // }
-
-    // String lineColorHex = routeDoc["route_color"].as<String>();
-    // String textColorHex = routeDoc["route_text_color"].as<String>();
-    // route.lineColor = (uint32_t)strtol(lineColorHex.c_str(), NULL, 16);
-    // route.textColor = (uint32_t)strtol(textColorHex.c_str(), NULL, 16);
-
-    // m_routes.push_back(m_routeTable->addRoute(route));
-  // }
-}
 
 // The function that performs the truncation based on the specified rules.
-String Stop::truncateName(const String &name, const bool truncateDowntown) {
+String Stop::truncateName(const String &name, const bool truncateDowntown) const {
   // We will work on a copy of the name so we don't modify the original reference.
   String result = name;
 
@@ -243,28 +157,6 @@ String Stop::truncateName(const String &name, const bool truncateDowntown) {
   if (result.endsWith("Station")) {
     // Take the substring from the beginning up to where "Station" starts.
     result = result.substring(0, result.length() - String("Station").length());
-  }
-
-  // Perform a final trim to clean up any trailing space and return the result.
-  result.trim();
-  return result;
-}
-
-String Stop::truncateRoute(const String &line) {
-  String result = line;
-
-  // --- Cut off "Metro" at the beginning ---
-  if (result.startsWith("Metro")) {
-    // Take the substring that starts after the word "Metro".
-    result = result.substring(String("Metro").length());
-  }
-
-  result.trim();
-
-  // --- Rule 3: Cut off "Line" at the end ---
-  if (result.endsWith("Line")) {
-    // Take the substring from the beginning up to where "Line" starts.
-    result = result.substring(0, result.length() - String("Line").length());
   }
 
   // Perform a final trim to clean up any trailing space and return the result.

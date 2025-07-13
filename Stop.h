@@ -1,7 +1,7 @@
 #ifndef STOP_H
 #define STOP_H
 
-#include "Arduino.h"
+#include <Arduino.h>
 #include "RouteTable.h"
 
 #include <vector>
@@ -28,7 +28,6 @@ public:
   String getName() const;
   String getAgencyId() const;
   const std::vector<Departure> *getDepartures() const;
-  const std::vector<Route *> *getRoutes() const;
   float getLat() const;
   float getLon() const;
 
@@ -40,17 +39,13 @@ private:
 
   String m_name;
   String m_agencyId;
-  float m_lat, m_lon;
   bool m_isValidStop;
 
   std::vector<Departure> m_departures;
-  std::vector<Route *> m_routes;
   unsigned long long m_lastRetrieveTime;
 
   bool retrieveStopInfo();
-  bool retrieveRoutesInfo();
-  String truncateRoute(const String &line);
-  String truncateName(const String &name, const bool truncateDowntown);
+  String truncateName(const String &name, const bool truncateDowntown) const;
 };
 
 #endif
