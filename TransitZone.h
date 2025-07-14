@@ -19,6 +19,9 @@ public:
   String getName() const;
   bool getIsValidZone() const;
 
+  void setWhiteList(std::vector<String> *whiteList);
+  void clearWhiteList();
+
   void debugPrint() const;
 private:
   String m_name;
@@ -33,7 +36,10 @@ private:
   std::vector<Route*> m_routes;
   std::vector<Stop*> m_stops;
 
+  std::vector<String> *m_whiteList;
+
   bool retrieveStops();
+  String getWhiteListIds() const;
 };
 
 #endif

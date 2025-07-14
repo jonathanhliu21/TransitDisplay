@@ -38,17 +38,15 @@ void setup()
   wifiClient.setCACert(TRANSIT_LAND_ROOT_CERTIFICATE);
 
   // ----- TESTING ----
-  // 34.036565, -118.424929, 100 (Westwood / Rancho Park)
-  // 34.062591, -118.445390, 100 (Westwood / Weyburn)
-  // 37.7928486,-122.3968361, 100 (Embarcadero)
-  // 34.055244, -118.233776, 200 (Los Angeles Union Station)
+  std::vector<String> testFilter = {"o-9q5-metro~losangeles", "o-9qh-metrolinktrains", "o-9q9-bart", "o-9q8y-sfmta"};
 
-  TransitZone zone("Westwood / Rancho Park", &routeTable, &stopTable, &http, 34.036565, -118.424929, 100);
+  // TransitZone zone("Westwood / Rancho Park", &routeTable, &stopTable, &http, 34.036565, -118.424929, 100);
   // TransitZone zone("Westwood / Weyburn", &routeTable, &stopTable, &http, 34.062591, -118.445390, 100);
   // TransitZone zone("Embarcadero", &routeTable, &stopTable, &http, 37.7928486,-122.3968361, 100);
   // TransitZone zone("Union Station", &routeTable, &stopTable, &http, 34.055244, -118.233776, 200);
-  zone.init();
+  zone.setWhiteList(&testFilter);
 
+  zone.init();
   zone.debugPrint();
 
   // Stop westwoodRancho("s-9q5c9hjyg6-westwood~ranchoparkstation", NUM_ROUTES_STORED, &routeTable, &http);

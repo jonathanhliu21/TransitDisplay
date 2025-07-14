@@ -1,6 +1,7 @@
 #include "RouteTable.h"
 
 #include <vector>
+#include <algorithm>
 #include <ArduinoJson.h>
 
 #include "arduino_secrets.h"
@@ -17,13 +18,13 @@ RouteTable::~RouteTable() {
   }
 }
 
-std::vector<Route*> RouteTable::retrieveRoutes(float lat, float lon, float radius) {
+std::vector<Route*> RouteTable::retrieveRoutes(float lat, float lon, float radius, std::vector<String> *whiteList) {
   String endpoint = String(ROUTES_ENDPOINT_PREFIX) + "?api_key=" + SECRET_API_KEY + "&lat=" + String(lat, 6) + "&lon=" + String(lon, 6) + "&radius=" + radius;
   int loopCnt = 0;
   std::vector<Route*> routes;
 
   // for "next" pages
-  while (endpoint != "" && loopCnt < 5) {
+  while (endpoint != "" && loopCnt < MAX_PAGES_PROCESSED) {
     // Serial.print("endpoint: ");
     // Serial.println(endpoint);
 
@@ -57,7 +58,7 @@ std::vector<Route*> RouteTable::retrieveRoutes(float lat, float lon, float radiu
       Serial.println(error.c_str());
       return routes;
     }
-    if (!responseDoc["meta"].is<JsonVariantConst>()
+    if (responseDoc["meta"].isNull()
         || !responseDoc["meta"]["next"].is<const char*>()) {
       endpoint = "";
     } else {
@@ -65,7 +66,7 @@ std::vector<Route*> RouteTable::retrieveRoutes(float lat, float lon, float radiu
     }
 
     // find if routes exist
-    if (!responseDoc["routes"].is<JsonArrayConst>()) {
+    if (responseDoc["routes"].isNull()) {
       Serial.println("routes key is not there");
       return routes;
     }
@@ -80,13 +81,13 @@ std::vector<Route*> RouteTable::retrieveRoutes(float lat, float lon, float radiu
     // Serial.println("size: " + String(size));
 
     for (int i = 0; i < size; i++) {
-      if (!arr[i].is<JsonVariantConst>()) {
+      if (arr[i].isNull()) {
         continue;
       }
       // Serial.println("Crash 4");
       JsonVariantConst routeDoc = arr[i].as<JsonVariantConst>();
       if (!routeDoc["onestop_id"].is<const char*>()
-          || !routeDoc["agency"].is<JsonVariantConst>()
+          || routeDoc["agency"].isNull()
           || !routeDoc["agency"]["onestop_id"].is<const char*>()
           || (!routeDoc["route_long_name"].is<const char *>() && !routeDoc["route_short_name"].is<const char *>())) {
           continue;
@@ -96,6 +97,10 @@ std::vector<Route*> RouteTable::retrieveRoutes(float lat, float lon, float radiu
 
       Route route;
       route.agencyId = routeDoc["agency"]["onestop_id"].as<String>(); // "o-9q5c-bigbluebus", ...
+
+      if (whiteList != nullptr && std::find(whiteList->begin(), whiteList->end(), route.agencyId) == whiteList->end()) {
+        continue;
+      }
 
       route.id = routeDoc["onestop_id"].as<String>(); // "r-9q5c8-1", "r-9q5c8-2", "r-9q5c8-8", ...
       if (!routeDoc["route_short_name"].is<const char*>()) {

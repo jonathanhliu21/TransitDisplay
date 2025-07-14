@@ -20,7 +20,7 @@ public:
   RouteTable(HttpClient *client);
   ~RouteTable();
   
-  std::vector<Route*> retrieveRoutes(float lat, float lon, float radius);
+  std::vector<Route*> retrieveRoutes(float lat, float lon, float radius, std::vector<String> *whiteList = nullptr);
   Route* getRoute(const String &oneStopId) const;
 
   void debugPrintAllRoutes() const;

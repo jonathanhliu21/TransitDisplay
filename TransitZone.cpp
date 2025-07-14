@@ -3,17 +3,19 @@
 #include <ArduinoJson.h>
 #include <ArduinoHttpClient.h>
 
+#include <vector>
+
 #include "RouteTable.h"
 #include "StopTable.h"
 #include "constants.h"
 #include "arduino_secrets.h"
 
 TransitZone::TransitZone(String name, RouteTable *routeTable, StopTable *stopTable, HttpClient *client, const float lat, const float lon, const float radius)
-  : m_name{name}, m_routeTable{routeTable}, m_stopTable{stopTable}, m_client{client}, m_lat{lat}, m_lon{lon}, m_radius{radius}
+  : m_name{name}, m_routeTable{routeTable}, m_stopTable{stopTable}, m_client{client}, m_lat{lat}, m_lon{lon}, m_radius{radius}, m_isValidZone{false}, m_whiteList{nullptr}
   {}
 
 void TransitZone::init() {
-  m_routes = m_routeTable->retrieveRoutes(m_lat, m_lon, m_radius);
+  m_routes = m_routeTable->retrieveRoutes(m_lat, m_lon, m_radius, m_whiteList);
   bool stopsValid = retrieveStops();
 
   m_isValidZone = m_routes.size() > 0 && stopsValid;
@@ -30,14 +32,26 @@ void TransitZone::debugPrint() const {
   m_stopTable->debugPrintAllStops();
 }
 
+void TransitZone::setWhiteList(std::vector<String> *whiteList) {
+  m_whiteList = whiteList;
+}
+
+void TransitZone::clearWhiteList() {
+  m_whiteList = nullptr;
+}
+
 bool TransitZone::retrieveStops() {
   String endpoint = String(STOPS_ENDPOINT_PREFIX) + "?api_key=" + SECRET_API_KEY + "&lat=" + String(m_lat, 6) + "&lon=" + String(m_lon, 6) + "&radius=" + m_radius;
+
+  if (m_whiteList != nullptr) {
+    endpoint += "&served_by_onestop_ids=" + getWhiteListIds();
+  }
 
   int loopCnt = 0;
   int stopCnt = 0;
 
    // for "next" pages
-  while (endpoint != "" && loopCnt < 5) {
+  while (endpoint != "" && loopCnt < MAX_PAGES_PROCESSED) {
     // Serial.print("endpoint: ");
     // Serial.println(endpoint);
 
@@ -57,7 +71,7 @@ bool TransitZone::retrieveStops() {
     filter_stops_0["feed_version"]["feed"]["onestop_id"] = true;
     filter_stops_0["stop_name"] = true;
     filter_stops_0["onestop_id"] = true;
-    filter_stops_0["parent"]["stop_id"] = true;
+    filter_stops_0["location_type"] = true;
 
     // Store response
     JsonDocument responseDoc;
@@ -68,7 +82,7 @@ bool TransitZone::retrieveStops() {
       Serial.println(error.c_str());
       return false;
     }
-    if (!responseDoc["meta"].is<JsonVariantConst>()
+    if (responseDoc["meta"].isNull()
         || !responseDoc["meta"]["next"].is<const char*>()) {
       endpoint = "";
     } else {
@@ -76,7 +90,7 @@ bool TransitZone::retrieveStops() {
     }
 
     // extract first stop
-    if (!responseDoc["stops"].is<JsonArrayConst>()) {
+    if (responseDoc["stops"].isNull()) {
       Serial.println("stops key is not there");
       return false;
     }
@@ -87,7 +101,7 @@ bool TransitZone::retrieveStops() {
     // Serial.println(size);
 
     for (int i = 0; i < size; i++) {
-      if (!arr[i].is<JsonVariantConst>()) {
+      if (arr[i].isNull()) {
         Serial.println("Not variant const");
         // Serial.print("Index ");
         // Serial.print(i);
@@ -97,8 +111,8 @@ bool TransitZone::retrieveStops() {
       // Serial.println("Crash 4");
       JsonVariantConst stopInfo = arr[i].as<JsonVariantConst>();
 
-      if (!stopInfo["parent"].isNull()) {
-        // Serial.println("Parent is not null");
+      // check that the location type is an actual stop and not some random exit
+      if (stopInfo["location_type"].isNull() || stopInfo["location_type"].as<int>() != 0) {
         continue;
       }
 
@@ -116,8 +130,8 @@ bool TransitZone::retrieveStops() {
       }
       String name = stopInfo["stop_name"].as<String>();
       // then feed id
-      if (!stopInfo["feed_version"].is<JsonVariantConst>()
-          || !stopInfo["feed_version"]["feed"].is<JsonVariantConst>()
+      if (stopInfo["feed_version"].isNull()
+          || stopInfo["feed_version"]["feed"].isNull()
           || !stopInfo["feed_version"]["feed"]["onestop_id"].is<const char *>()) {
         Serial.println("Could not retrieve feed ID from stop");
         continue;
@@ -132,4 +146,15 @@ bool TransitZone::retrieveStops() {
   }
 
   return loopCnt > 0;
+}
+
+String TransitZone::getWhiteListIds() const {
+  String res;
+  if (m_whiteList == nullptr) return res;
+
+  for (int i = 0; i < m_whiteList->size(); i++) {
+    res += m_whiteList->at(i) + ",";
+  }
+
+  return res;
 }
