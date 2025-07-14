@@ -1,17 +1,13 @@
 #ifndef CONSTANTS_H
 #define CONSTANTS_H
 
-#include <vector>
-
 #define NUM_ROUTES_STORED 5
 #define REFRESH_PERIOD 30000 // ms
-
-#define SEARCH_RADIUS 100 // meters
 
 // API calls
 #define TRANSIT_LAND_SERVER "api.transit.land"
 #define TRANSIT_LAND_PORT 443
-#define STOPS_ENDPOINT_PREFIX "/api/v2/rest/stops/"
+#define STOPS_ENDPOINT_PREFIX "/api/v2/rest/stops"
 #define ROUTES_ENDPOINT_PREFIX "/api/v2/rest/routes"
 
 const char * const TRANSIT_LAND_ROOT_CERTIFICATE = \
@@ -46,22 +42,5 @@ const char * const TRANSIT_LAND_ROOT_CERTIFICATE = \
 "mRGunUHBcnWEvgJBQl9nJEiU0Zsnvgc/ubhPgXRR4Xq37Z0j4r7g1SgEEzwxA57d\n" \
 "emyPxgcYxn/eR44/KJ4EBs+lVDR3veyJm+kXQ99b21/+jh5Xos1AnX5iItreGCc=\n" \
 "-----END CERTIFICATE-----\n";
-
-// Supported agencies onestop IDs
-// const std::vector<String> SUPPORTED_AGENCIES = {
-// // --------- SAN FRANCISCO BAY AREA ----------
-//   "o-9q9-bart",
-//   "o-9q9-vta",
-//   "o-9q9-actransit",
-//   "o-9q8y-sfmta",
-//   "o-9q9-caltrain",
-
-// // --------- GREATER LOS ANGELES ----------
-//   "o-9q5-metro~losangeles",
-//   "o-9q5c-culvercitybus",
-//   "o-9q5c-bigbluebus",
-//   "o-9q5b-longbeachtransit",
-//   "o-9qh1-foothilltransit"
-// }
 
 #endif

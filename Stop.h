@@ -17,19 +17,18 @@ struct Departure {
 
 class Stop {
 public:
-  Stop(const String &oneStopId, const int &numDepartures, RouteTable *routeTable, HttpClient *client);
+  Stop(const String &oneStopId, const String &name, const String &feedId, const int &numDepartures, RouteTable *routeTable, HttpClient *client);
 
-  void init();
   void callDeparturesAPI();
 
-  bool getIsValidStop() const;
   String getId() const;
   int getNumDepartures() const;
   String getName() const;
-  String getAgencyId() const;
+  String getFeedId() const;
   const std::vector<Departure> *getDepartures() const;
   float getLat() const;
   float getLon() const;
+  void debugPrintStop() const;
 
 private:
   String m_id;
@@ -38,13 +37,11 @@ private:
   HttpClient *m_client;
 
   String m_name;
-  String m_agencyId;
-  bool m_isValidStop;
+  String m_feedId;
 
   std::vector<Departure> m_departures;
   unsigned long long m_lastRetrieveTime;
 
-  bool retrieveStopInfo();
   String truncateName(const String &name, const bool truncateDowntown) const;
 };
 

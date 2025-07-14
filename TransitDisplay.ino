@@ -4,13 +4,15 @@
 #include <vector>
 
 #include "RouteTable.h"
-#include "Stop.h"
+#include "StopTable.h"
+#include "TransitZone.h"
 #include "arduino_secrets.h"
 #include "constants.h"
 
 WiFiClientSecure wifiClient;
 HttpClient http(wifiClient, TRANSIT_LAND_SERVER, TRANSIT_LAND_PORT);
 RouteTable routeTable(&http);
+StopTable stopTable;
 
 void setup()
 {
@@ -36,13 +38,18 @@ void setup()
   wifiClient.setCACert(TRANSIT_LAND_ROOT_CERTIFICATE);
 
   // ----- TESTING ----
-  // 34.036565, -118.424929 (WW/RP all stops)
-  // 34.036816, -118.424576 (WW/RP E line)
-  // 34.062591, -118.445390 (WW/WB all)
-  // 37.7928486,-122.3968361 (EMBR)
-  // routeTable.retrieveRoutes(34.036565, -118.424929, SEARCH_RADIUS);
-  routeTable.retrieveRoutes(37.7928486,-122.3968361, SEARCH_RADIUS);
-  routeTable.debugPrintAllRoutes();
+  // 34.036565, -118.424929, 100 (Westwood / Rancho Park)
+  // 34.062591, -118.445390, 100 (Westwood / Weyburn)
+  // 37.7928486,-122.3968361, 100 (Embarcadero)
+  // 34.055244, -118.233776, 200 (Los Angeles Union Station)
+
+  TransitZone zone("Westwood / Rancho Park", &routeTable, &stopTable, &http, 34.036565, -118.424929, 100);
+  // TransitZone zone("Westwood / Weyburn", &routeTable, &stopTable, &http, 34.062591, -118.445390, 100);
+  // TransitZone zone("Embarcadero", &routeTable, &stopTable, &http, 37.7928486,-122.3968361, 100);
+  // TransitZone zone("Union Station", &routeTable, &stopTable, &http, 34.055244, -118.233776, 200);
+  zone.init();
+
+  zone.debugPrint();
 
   // Stop westwoodRancho("s-9q5c9hjyg6-westwood~ranchoparkstation", NUM_ROUTES_STORED, &routeTable, &http);
   // Serial.println("Initializing Westwood/Rancho Park...");

@@ -9,16 +9,14 @@
 #include "RouteTable.h"
 #include "arduino_secrets.h"
 
-Stop::Stop(const String &oneStopId, const int &numDepartures, RouteTable *routeTable, HttpClient *client)
-  : m_id{ oneStopId }, m_numDepartures{ numDepartures }, m_routeTable{ routeTable }, m_client{ client },
-    m_isValidStop{ false }, m_lastRetrieveTime{ 0 } {
+Stop::Stop(const String &oneStopId, const String &name, const String &feedId, const int &numDepartures, RouteTable *routeTable, HttpClient *client)
+  : m_id{ oneStopId }, m_numDepartures{ numDepartures }, m_feedId{feedId}, m_routeTable{ routeTable }, m_client{ client },
+    m_lastRetrieveTime{ 0 } {
+  m_name = truncateName(name, false);  // Don't truncate "Downtown" when retrieving station name
   m_departures.reserve(m_numDepartures);
 }
 
 // getters
-bool Stop::getIsValidStop() const {
-  return m_isValidStop;
-}
 String Stop::getId() const {
   return m_id;
 }
@@ -28,74 +26,25 @@ int Stop::getNumDepartures() const {
 String Stop::getName() const {
   return m_name;
 }
-String Stop::getAgencyId() const {
-  return m_agencyId;
+String Stop::getFeedId() const {
+  return m_feedId;
 }
 const std::vector<Departure> *Stop::getDepartures() const {
   return &m_departures;
 }
 
-void Stop::init() {
-  // Test cases
+void Stop::debugPrintStop() const {
+  Serial.print(F("  ID: "));
+  Serial.println(m_id);
+  
+  Serial.print(F("  Name: "));
+  Serial.println(m_name);
 
-  m_isValidStop = retrieveStopInfo();
+  Serial.print(F("  Feed ID: "));
+  Serial.println(m_feedId);
+
+  Serial.println(F("-----------------------"));
 }
-
-bool Stop::retrieveStopInfo() {
-  String endpoint = STOPS_ENDPOINT_PREFIX + m_id + "?api_key=" + SECRET_API_KEY;
-  m_client->get(endpoint);
-
-  // Get the status code from the server's response
-  int statusCode = m_client->responseStatusCode();
-  if (statusCode != 200) {
-    Serial.println("Status Code for stop did not return 200");
-    return false;
-  }
-
-  // Create filter
-  JsonDocument filter;
-  filter["stops"][0]["feed_version"]["feed"]["onestop_id"] = true;
-  filter["stops"][0]["stop_name"] = true;
-
-  // Store response
-  JsonDocument responseDoc;
-  DeserializationError error = deserializeJson(responseDoc, m_client->responseBody(), DeserializationOption::Filter(filter));
-  if (error) {
-    Serial.println("Deserialization for routes failed");
-    return false;
-  }
-
-  // extract first stop
-  if (!responseDoc["stops"].is<JsonArray>()) {
-    Serial.println("stops key is not there");
-    return false;
-  }
-  JsonArray arr = responseDoc["stops"];
-  if (arr.size() < 1) {
-    Serial.println("arr size is 0");
-    return false;
-  }
-  JsonVariant stopInfo = arr[0];
-
-  // extract info from stop
-  // first extract stop name
-  if (!stopInfo["stop_name"].is<const char *>()) {
-    Serial.println("Stop name doesn't exist or is wrong type");
-    return false;
-  }
-  m_name = truncateName(stopInfo["stop_name"].as<String>(), false); // Don't truncate "Downtown" when retrieving station name
-  // then agency id
-  if (!stopInfo["feed_version"].is<JsonVariant>()
-      || !stopInfo["feed_version"]["feed"].is<JsonVariant>()
-      || !stopInfo["feed_version"]["feed"]["onestop_id"].is<const char *>()) {
-    Serial.println("Could not retrieve agency ID from stop");
-    return false;
-  }
-  m_agencyId = stopInfo["feed_version"]["feed"]["onestop_id"].as<String>();
-
-  return true;
-}
-
 
 // The function that performs the truncation based on the specified rules.
 String Stop::truncateName(const String &name, const bool truncateDowntown) const {

@@ -10,14 +10,17 @@ RouteTable::RouteTable(HttpClient *client) : m_client(client) {}
 
 RouteTable::~RouteTable() {
   for (int i = 0; i < m_routes.size(); i++) {
-    delete m_routes[i];
+    if (m_routes[i] != nullptr) {
+      delete m_routes[i];
+      m_routes[i] = nullptr;
+    }
   }
 }
 
-bool RouteTable::retrieveRoutes(float lat, float lon, float radius) {
+std::vector<Route*> RouteTable::retrieveRoutes(float lat, float lon, float radius) {
   String endpoint = String(ROUTES_ENDPOINT_PREFIX) + "?api_key=" + SECRET_API_KEY + "&lat=" + String(lat, 6) + "&lon=" + String(lon, 6) + "&radius=" + radius;
   int loopCnt = 0;
-  int routeCnt = 0;
+  std::vector<Route*> routes;
 
   // for "next" pages
   while (endpoint != "" && loopCnt < 5) {
@@ -30,7 +33,7 @@ bool RouteTable::retrieveRoutes(float lat, float lon, float radius) {
     int statusCode = m_client->responseStatusCode();
     if (statusCode != 200) {
       Serial.println("Status Code for stop did not return 200");
-      return false;
+      return routes;
     }
 
     // Create filter
@@ -52,7 +55,7 @@ bool RouteTable::retrieveRoutes(float lat, float lon, float radius) {
     if (error) {
       Serial.println("Deserialization for stop failed");
       Serial.println(error.c_str());
-      return false;
+      return routes;
     }
     if (!responseDoc["meta"].is<JsonVariantConst>()
         || !responseDoc["meta"]["next"].is<const char*>()) {
@@ -64,7 +67,7 @@ bool RouteTable::retrieveRoutes(float lat, float lon, float radius) {
     // find if routes exist
     if (!responseDoc["routes"].is<JsonArrayConst>()) {
       Serial.println("routes key is not there");
-      return false;
+      return routes;
     }
 
     // Serial.println(responseDoc["routes"].as<JsonArrayConst>().size());
@@ -110,11 +113,10 @@ bool RouteTable::retrieveRoutes(float lat, float lon, float radius) {
 
       // Serial.println("Crash 4.3");
 
-      addRoute(route);
+      Route *rt = addRoute(route);
+      routes.push_back(rt);
 
       // Serial.println("Crash 4.4");
-
-      routeCnt++;
       // Serial.println("Crash 4.5");
     }
 
@@ -122,7 +124,7 @@ bool RouteTable::retrieveRoutes(float lat, float lon, float radius) {
   }
   // Serial.println("crash 5");
 
-  return routeCnt > 0;
+  return routes;
 }
 
 Route *RouteTable::getRoute(const String &oneStopId) const {
@@ -182,6 +184,17 @@ Route* RouteTable::addRoute(const Route &route) {
 
 void RouteTable::modifyRoute(Route &route) const {
   route.name = truncateRoute(route.name);
+
+  // color the LA metro buses
+  if (route.agencyId == "o-9q5-metro~losangeles") {
+    if (route.lineColor == 0 && route.textColor == 0xffffff) {
+      route.lineColor = 0xC54858;
+    }
+    if (route.lineColor == 0 && route.textColor == 0) {
+      route.lineColor = 0xfa7343;
+      route.textColor = 0xffffff;
+    }
+  }
 }
 
 String RouteTable::truncateRoute(const String &routeStr) const {
@@ -195,10 +208,49 @@ String RouteTable::truncateRoute(const String &routeStr) const {
 
   result.trim();
 
-  // --- Rule 3: Cut off "Line" at the end ---
+  // --- Cut off "Line" at the end ---
   if (result.endsWith("Line")) {
     // Take the substring from the beginning up to where "Line" starts.
     result = result.substring(0, result.length() - String("Line").length());
+  }
+
+  // --- Truncate stuff like "J Line formerly Silver Line with services 910 and 950 to Harbor Gateway and San Pedro respectively" ---
+  // Also avoids incorrectly shortening names like "Rapid 6".
+  int firstSpaceIndex = result.indexOf(' ');
+
+  // Only check if a space exists.
+  if (firstSpaceIndex != -1) {
+    bool shouldTruncate = false;
+    
+    // Get the parts before and after the first space.
+    String prefix = result.substring(0, firstSpaceIndex);
+    String suffix = result.substring(firstSpaceIndex);
+    suffix.trim(); // Clean up suffix for inspection.
+
+    // Heuristic A (New): If the first word is a single letter or digit, truncate.
+    if (prefix.length() == 1 && (isAlpha(prefix.charAt(0)) || isDigit(prefix.charAt(0)))) {
+        shouldTruncate = true;
+    }
+
+    // Heuristic B (Old): If not, truncate only if the suffix is "complex".
+    if (!shouldTruncate) {
+        bool isComplex = false;
+        // Check if the suffix contains anything other than digits.
+        for (int i = 0; i < suffix.length(); i++) {
+          if (!isDigit(suffix.charAt(i))) {
+            isComplex = true; // Found a non-digit character, so it's complex.
+            break;
+          }
+        }
+        if (isComplex) {
+            shouldTruncate = true;
+        }
+    }
+
+    // If either heuristic decided we should truncate, do it.
+    if (shouldTruncate) {
+      result = prefix; // result becomes just the prefix
+    }
   }
 
   // Perform a final trim to clean up any trailing space and return the result.
