@@ -1,7 +1,7 @@
 #include "TransitZone.h"
 
 #include <ArduinoJson.h>
-#include <ArduinoHttpClient.h>
+#include <HTTPClient.h>
 
 #include <vector>
 
@@ -10,7 +10,7 @@
 #include "constants.h"
 #include "arduino_secrets.h"
 
-TransitZone::TransitZone(String name, RouteTable *routeTable, StopTable *stopTable, HttpClient *client, const float lat, const float lon, const float radius)
+TransitZone::TransitZone(String name, RouteTable *routeTable, StopTable *stopTable, HTTPClient *client, const float lat, const float lon, const float radius)
   : m_name{name}, m_routeTable{routeTable}, m_stopTable{stopTable}, m_client{client}, m_lat{lat}, m_lon{lon}, m_radius{radius}, m_isValidZone{false}, m_whiteList{nullptr}
   {}
 
@@ -55,14 +55,8 @@ bool TransitZone::retrieveStops() {
     // Serial.print("endpoint: ");
     // Serial.println(endpoint);
 
-    m_client->get(endpoint);
-
-    // Get the status code from the server's response
-    int statusCode = m_client->responseStatusCode();
-    if (statusCode != 200) {
-      Serial.println("Status Code for stop did not return 200");
-      return false;
-    }
+    m_client->begin(TRANSIT_LAND_SERVER, 443, endpoint);
+    m_client->GET();
 
     // Create filter
     JsonDocument filter;
@@ -76,10 +70,11 @@ bool TransitZone::retrieveStops() {
     // Store response
     JsonDocument responseDoc;
     // Serial.println(m_client->responseBody());
-    DeserializationError error = deserializeJson(responseDoc, m_client->responseBody(), DeserializationOption::Filter(filter));
+    DeserializationError error = deserializeJson(responseDoc, m_client->getStream(), DeserializationOption::Filter(filter));
     if (error) {
       Serial.println("Deserialization for stop failed");
       Serial.println(error.c_str());
+      m_client->end();
       return false;
     }
     if (responseDoc["meta"].isNull()
@@ -92,6 +87,7 @@ bool TransitZone::retrieveStops() {
     // extract first stop
     if (responseDoc["stops"].isNull()) {
       Serial.println("stops key is not there");
+      m_client->end();
       return false;
     }
     JsonArrayConst arr = responseDoc["stops"].as<JsonArrayConst>();
@@ -141,11 +137,14 @@ bool TransitZone::retrieveStops() {
       Stop stop(onestopId, name, feedId, NUM_ROUTES_STORED, m_routeTable, m_client);
       m_stops.push_back(m_stopTable->addStop(stop));
 
-      loopCnt++;
+      stopCnt++;
     }
+    
+    m_client->end();
+    loopCnt++;
   }
 
-  return loopCnt > 0;
+  return stopCnt > 0;
 }
 
 String TransitZone::getWhiteListIds() const {

@@ -3,11 +3,12 @@
 #include <vector>
 #include <algorithm>
 #include <ArduinoJson.h>
+#include <HTTPClient.h>
 
 #include "arduino_secrets.h"
 #include "constants.h"
 
-RouteTable::RouteTable(HttpClient *client) : m_client(client) {}
+RouteTable::RouteTable(HTTPClient *client) : m_client(client) {}
 
 RouteTable::~RouteTable() {
   for (int i = 0; i < m_routes.size(); i++) {
@@ -28,14 +29,11 @@ std::vector<Route*> RouteTable::retrieveRoutes(float lat, float lon, float radiu
     // Serial.print("endpoint: ");
     // Serial.println(endpoint);
 
-    m_client->get(endpoint);
-
-    // Get the status code from the server's response
-    int statusCode = m_client->responseStatusCode();
-    if (statusCode != 200) {
-      Serial.println("Status Code for stop did not return 200");
-      return routes;
-    }
+    m_client->useHTTP10(true);
+    // m_client->begin(TRANSIT_LAND_SERVER, 443, endpoint);
+    m_client->begin(TRANSIT_LAND_SERVER, 443, endpoint, TRANSIT_LAND_ROOT_CERTIFICATE);
+    // m_client->begin(*m_wifiClient, TRANSIT_LAND_SERVER, 443, endpoint, true);
+    m_client->GET();
 
     // Create filter
     JsonDocument filter;
@@ -52,10 +50,11 @@ std::vector<Route*> RouteTable::retrieveRoutes(float lat, float lon, float radiu
     // Store response
     JsonDocument responseDoc;
     // Serial.println(m_client->responseBody());
-    DeserializationError error = deserializeJson(responseDoc, m_client->responseBody(), DeserializationOption::Filter(filter));
+    DeserializationError error = deserializeJson(responseDoc, m_client->getStream(), DeserializationOption::Filter(filter));
     if (error) {
-      Serial.println("Deserialization for stop failed");
+      Serial.println("Deserialization for route failed");
       Serial.println(error.c_str());
+      m_client->end();
       return routes;
     }
     if (responseDoc["meta"].isNull()
@@ -67,6 +66,7 @@ std::vector<Route*> RouteTable::retrieveRoutes(float lat, float lon, float radiu
 
     // find if routes exist
     if (responseDoc["routes"].isNull()) {
+      m_client->end();
       Serial.println("routes key is not there");
       return routes;
     }
@@ -125,6 +125,7 @@ std::vector<Route*> RouteTable::retrieveRoutes(float lat, float lon, float radiu
       // Serial.println("Crash 4.5");
     }
 
+    m_client->end();
     loopCnt++;
   }
   // Serial.println("crash 5");

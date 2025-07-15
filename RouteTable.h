@@ -2,7 +2,8 @@
 #define ROUTE_TABLE_H
 
 #include <Arduino.h>
-#include <ArduinoHttpClient.h>
+#include <WiFiClientSecure.h>
+#include <HTTPClient.h>
 
 #include <cstdint>
 #include <vector>
@@ -17,7 +18,7 @@ struct Route {
 
 class RouteTable {
 public:
-  RouteTable(HttpClient *client);
+  RouteTable(HTTPClient *client);
   ~RouteTable();
   
   std::vector<Route*> retrieveRoutes(float lat, float lon, float radius, std::vector<String> *whiteList = nullptr);
@@ -26,7 +27,8 @@ public:
   void debugPrintAllRoutes() const;
 
 private:
-  HttpClient *m_client;
+  HTTPClient *m_client;
+  
   // const std::vector<String> *m_supportedAgencies;
   std::vector<Route*> m_routes;
 

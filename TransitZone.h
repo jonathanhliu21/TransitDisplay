@@ -2,7 +2,7 @@
 #define TRANSIT_ZONE_H
 
 #include <Arduino.h>
-#include <ArduinoHttpClient.h>
+#include <HTTPClient.h>
 
 #include "RouteTable.h"
 #include "StopTable.h"
@@ -12,7 +12,7 @@
 
 class TransitZone {
 public:
-  TransitZone(String name, RouteTable *routeTable, StopTable *stopTable, HttpClient *client, const float lat, const float lon, const float radius);
+  TransitZone(String name, RouteTable *routeTable, StopTable *stopTable, HTTPClient *client, const float lat, const float lon, const float radius);
 
   void init();
 
@@ -27,7 +27,7 @@ private:
   String m_name;
   RouteTable *m_routeTable;
   StopTable *m_stopTable;
-  HttpClient *m_client;
+  HTTPClient *m_client;
   float m_lat, m_lon;
   float m_radius;
 

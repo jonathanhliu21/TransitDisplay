@@ -5,7 +5,7 @@
 #include "RouteTable.h"
 
 #include <vector>
-#include <ArduinoHttpClient.h>
+#include <HTTPClient.h>
 
 struct Departure {
   Route *route;
@@ -17,7 +17,7 @@ struct Departure {
 
 class Stop {
 public:
-  Stop(const String &oneStopId, const String &name, const String &feedId, const int &numDepartures, RouteTable *routeTable, HttpClient *client);
+  Stop(const String &oneStopId, const String &name, const String &feedId, const int &numDepartures, RouteTable *routeTable, HTTPClient *client);
 
   void callDeparturesAPI();
 
@@ -34,7 +34,7 @@ private:
   String m_id;
   int m_numDepartures;
   RouteTable *m_routeTable;
-  HttpClient *m_client;
+  HTTPClient *m_client;
 
   String m_name;
   String m_feedId;

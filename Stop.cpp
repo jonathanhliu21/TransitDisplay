@@ -3,17 +3,18 @@
 #include <cstdlib>
 #include <vector>
 #include <ArduinoJson.h>
-#include <ArduinoHttpClient.h>
+#include <HTTPClient.h>
 
 #include "constants.h"
 #include "RouteTable.h"
 #include "arduino_secrets.h"
 
-Stop::Stop(const String &oneStopId, const String &name, const String &feedId, const int &numDepartures, RouteTable *routeTable, HttpClient *client)
+Stop::Stop(const String &oneStopId, const String &name, const String &feedId, const int &numDepartures, RouteTable *routeTable, HTTPClient *client)
   : m_id{ oneStopId }, m_numDepartures{ numDepartures }, m_feedId{feedId}, m_routeTable{ routeTable }, m_client{ client },
     m_lastRetrieveTime{ 0 } {
   m_name = truncateName(name, false);  // Don't truncate "Downtown" when retrieving station name
   m_departures.reserve(m_numDepartures);
+  m_departures.resize(m_numDepartures);
 }
 
 // getters
@@ -44,6 +45,21 @@ void Stop::debugPrintStop() const {
   Serial.println(m_feedId);
 
   Serial.println(F("-----------------------"));
+}
+
+void Stop::callDeparturesAPI() {
+  String endpoint = String(STOPS_ENDPOINT_PREFIX) + "/departures/" + m_id + "/departures?api_key" + SECRET_API_KEY + "&limit=" + m_numDepartures;
+
+  int loopCnt = 0;
+  // for "next" pages
+  // while (endpoint != "" && loopCnt < MAX_PAGES_PROCESSED) {
+  //   // Get the status code from the server's response
+  //   int statusCode = m_client->responseStatusCode();
+  //   if (statusCode != 200) {
+  //     Serial.println("Status Code for stop did not return 200");
+  //     return false;
+  //   }
+  // }
 }
 
 // The function that performs the truncation based on the specified rules.
