@@ -31,6 +31,10 @@ void setup()
   }
   Serial.print("Connected to ");
   Serial.println(SECRET_SSID);
+
+  delay(3000);
+
+  Serial.println("Pinging API...");
   
   // initialize http
   http.useHTTP10(true);
@@ -40,8 +44,8 @@ void setup()
 
   // TransitZone zone("Westwood / Rancho Park", &routeTable, &stopTable, &http, 34.036565, -118.424929, 100);
   // TransitZone zone("Westwood / Weyburn", &routeTable, &stopTable, &http, 34.062591, -118.445390, 100);
-  // TransitZone zone("Embarcadero", &routeTable, &stopTable, &http, 37.7928486,-122.3968361, 100);
-  TransitZone zone("Union Station", &routeTable, &stopTable, &http, 34.055244, -118.233776, 200);
+  TransitZone zone("Embarcadero", &routeTable, &stopTable, &http, 37.7928486,-122.3968361, 100);
+  // TransitZone zone("Union Station", &routeTable, &stopTable, &http, 34.055244, -118.233776, 200);
   zone.setWhiteList(&testFilter);
 
   zone.init();
