@@ -10,16 +10,18 @@
 struct Departure {
   Route *route;
   String direction;
-  signed long long timestamp;
+  String timestamp;
   bool isRealTime;
   String agency_id;
+  int delay;
+  bool isValid;
 };
 
 class Stop {
 public:
   Stop(const String &oneStopId, const String &name, const String &feedId, const int &numDepartures, RouteTable *routeTable, HTTPClient *client);
 
-  void callDeparturesAPI();
+  bool callDeparturesAPI();
 
   String getId() const;
   int getNumDepartures() const;

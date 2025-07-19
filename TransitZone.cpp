@@ -2,6 +2,7 @@
 
 #include <ArduinoJson.h>
 #include <HTTPClient.h>
+#include <StreamUtils.h>
 
 #include <vector>
 
@@ -29,7 +30,7 @@ void TransitZone::debugPrint() const {
   Serial.println(m_isValidZone ? "Valid Zone" : "Invalid Zone");
 
   m_routeTable->debugPrintAllRoutes();
-  m_stopTable->debugPrintAllStops();
+  // m_stopTable->debugPrintAllStops();
 }
 
 void TransitZone::setWhiteList(std::vector<String> *whiteList) {
@@ -50,13 +51,26 @@ bool TransitZone::retrieveStops() {
   int loopCnt = 0;
   int stopCnt = 0;
 
+  const char* keys[] = {"Transfer-Encoding"};
+
    // for "next" pages
   while (endpoint != "" && loopCnt < MAX_PAGES_PROCESSED) {
     // Serial.print("endpoint: ");
     // Serial.println(endpoint);
+    m_client->collectHeaders(keys, 1);
 
-    m_client->begin(TRANSIT_LAND_SERVER, 443, endpoint);
+    m_client->begin(TRANSIT_LAND_SERVER, TRANSIT_LAND_PORT, endpoint, TRANSIT_LAND_ROOT_CERTIFICATE);
     m_client->GET();
+
+    // Get the raw and the decoded stream
+    Stream& rawStream = m_client->getStream();
+    ChunkDecodingStream decodedStream(rawStream);
+    // Choose the right stream depending on the Transfer-Encoding header
+    Stream& response =
+        m_client->header("Transfer-Encoding") == "chunked" ? decodedStream : rawStream;
+    
+    // Serial.print("is chunked: ");
+    // Serial.println(m_client->header("Transfer-Encoding") == "chunked");
 
     // Create filter
     JsonDocument filter;
@@ -70,7 +84,7 @@ bool TransitZone::retrieveStops() {
     // Store response
     JsonDocument responseDoc;
     // Serial.println(m_client->responseBody());
-    DeserializationError error = deserializeJson(responseDoc, m_client->getStream(), DeserializationOption::Filter(filter));
+    DeserializationError error = deserializeJson(responseDoc, response, DeserializationOption::Filter(filter));
     if (error) {
       Serial.println("Deserialization for stop failed");
       Serial.println(error.c_str());

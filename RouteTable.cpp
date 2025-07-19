@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <ArduinoJson.h>
 #include <HTTPClient.h>
+#include <StreamUtils.h>
 
 #include "arduino_secrets.h"
 #include "constants.h"
@@ -23,17 +24,30 @@ std::vector<Route*> RouteTable::retrieveRoutes(float lat, float lon, float radiu
   String endpoint = String(ROUTES_ENDPOINT_PREFIX) + "?api_key=" + SECRET_API_KEY + "&lat=" + String(lat, 6) + "&lon=" + String(lon, 6) + "&radius=" + radius;
   int loopCnt = 0;
   std::vector<Route*> routes;
+  const char* keys[] = {"Transfer-Encoding"};
 
   // for "next" pages
   while (endpoint != "" && loopCnt < MAX_PAGES_PROCESSED) {
     // Serial.print("endpoint: ");
     // Serial.println(endpoint);
+    m_client->collectHeaders(keys, 1);
 
-    m_client->useHTTP10(true);
     // m_client->begin(TRANSIT_LAND_SERVER, 443, endpoint);
-    m_client->begin(TRANSIT_LAND_SERVER, 443, endpoint, TRANSIT_LAND_ROOT_CERTIFICATE);
+    m_client->begin(TRANSIT_LAND_SERVER, TRANSIT_LAND_PORT, endpoint, TRANSIT_LAND_ROOT_CERTIFICATE);
     // m_client->begin(*m_wifiClient, TRANSIT_LAND_SERVER, 443, endpoint, true);
     m_client->GET();
+
+    // String responseStr = m_client->getString();
+    // Serial.println(responseStr);
+
+    // Get the raw and the decoded stream
+    Stream& rawStream = m_client->getStream();
+    ChunkDecodingStream decodedStream(rawStream);
+    // Choose the right stream depending on the Transfer-Encoding header
+    Stream& response =
+        m_client->header("Transfer-Encoding") == "chunked" ? decodedStream : rawStream;
+    // Serial.print("is chunked: ");
+    // Serial.println(m_client->header("Transfer-Encoding") == "chunked");
 
     // Create filter
     JsonDocument filter;
@@ -50,7 +64,7 @@ std::vector<Route*> RouteTable::retrieveRoutes(float lat, float lon, float radiu
     // Store response
     JsonDocument responseDoc;
     // Serial.println(m_client->responseBody());
-    DeserializationError error = deserializeJson(responseDoc, m_client->getStream(), DeserializationOption::Filter(filter));
+    DeserializationError error = deserializeJson(responseDoc, response, DeserializationOption::Filter(filter));
     if (error) {
       Serial.println("Deserialization for route failed");
       Serial.println(error.c_str());

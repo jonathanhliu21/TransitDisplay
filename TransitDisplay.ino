@@ -7,6 +7,7 @@
 #include "TransitZone.h"
 #include "arduino_secrets.h"
 #include "constants.h"
+#include "Stop.h"
 
 HTTPClient http;
 RouteTable routeTable(&http);
@@ -37,23 +38,23 @@ void setup()
   Serial.println("Pinging API...");
   
   // initialize http
-  http.useHTTP10(true);
+  // http.useHTTP10(true);
 
   // ----- TESTING ----
   std::vector<String> testFilter = {"o-9q5-metro~losangeles", "o-9qh-metrolinktrains", "o-9q9-bart", "o-9q8y-sfmta"};
 
-  // TransitZone zone("Westwood / Rancho Park", &routeTable, &stopTable, &http, 34.036565, -118.424929, 100);
-  // TransitZone zone("Westwood / Weyburn", &routeTable, &stopTable, &http, 34.062591, -118.445390, 100);
-  TransitZone zone("Embarcadero", &routeTable, &stopTable, &http, 37.7928486,-122.3968361, 100);
+  // TransitZone zone("Westwood / Rancho Park", &routeTable, &stopTable, &http, 34.036565, -118.424929, 100); // s-9q5c9hjyg6-westwood~ranchoparkstation
+  TransitZone zone("Westwood / Weyburn", &routeTable, &stopTable, &http, 34.062591, -118.445390, 100); // s-9q5cb8yteq-westwood~weyburn
+  // TransitZone zone("Embarcadero", &routeTable, &stopTable, &http, 37.7928486,-122.3968361, 100); // s-9q8yyzcnrh-embarcadero
   // TransitZone zone("Union Station", &routeTable, &stopTable, &http, 34.055244, -118.233776, 200);
   zone.setWhiteList(&testFilter);
 
   zone.init();
   zone.debugPrint();
 
-  // Stop westwoodRancho("s-9q5c9hjyg6-westwood~ranchoparkstation", NUM_ROUTES_STORED, &routeTable, &http);
-  // Serial.println("Initializing Westwood/Rancho Park...");
-  // westwoodRancho.init();
+  Stop wwrp("s-9q5cb8yteq-westwood~weyburn", "Westwood / Weyburn", "", NUM_ROUTES_STORED, &routeTable, &http);
+  wwrp.callDeparturesAPI();
+  wwrp.debugPrintStop();
 
   // Serial.println("Valid Stop: " + String(westwoodRancho.getIsValidStop()));
   // Serial.println("Stop Name: " + String(westwoodRancho.getName()));

@@ -1,7 +1,7 @@
 #ifndef CONSTANTS_H
 #define CONSTANTS_H
 
-#define NUM_ROUTES_STORED 5
+#define NUM_ROUTES_STORED 10
 #define REFRESH_PERIOD 30000 // ms
 #define MAX_PAGES_PROCESSED 5
 
