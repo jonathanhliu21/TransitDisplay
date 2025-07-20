@@ -38,8 +38,8 @@ time_t Stop::timegm_custom(struct tm *timeinfo) {
   return result;
 }
 
-Stop::Stop(const String &oneStopId, const String &name, const String &feedId, const int &numDepartures, RouteTable *routeTable, HTTPClient *client)
-  : m_id{ oneStopId }, m_numDepartures{ numDepartures }, m_feedId{feedId}, m_routeTable{ routeTable }, m_client{ client },
+Stop::Stop(const String &oneStopId, const String &name, const String &feedId, const int &numDepartures, RouteTable *routeTable)
+  : m_id{ oneStopId }, m_numDepartures{ numDepartures }, m_feedId{feedId}, m_routeTable{ routeTable },
     m_lastRetrieveTime{ 0 } {
   m_name = name;  // Don't truncate "Downtown" when retrieving station name
   m_departures.reserve(m_numDepartures);
@@ -124,22 +124,23 @@ bool Stop::callDeparturesAPI() {
   int numDeparturesProcessed = 0;
   // for "next" pages
   while (endpoint != "" && loopCnt < MAX_PAGES_PROCESSED) {
-    m_client->collectHeaders(keys, 1);
+    HTTPClient client;
+    client.collectHeaders(keys, 1);
 
     // m_client->useHTTP10(true);
     // m_client->begin(TRANSIT_LAND_SERVER, 443, endpoint);
-    m_client->begin(TRANSIT_LAND_SERVER, TRANSIT_LAND_PORT, endpoint, TRANSIT_LAND_ROOT_CERTIFICATE);
+    client.begin(TRANSIT_LAND_SERVER, TRANSIT_LAND_PORT, endpoint, TRANSIT_LAND_ROOT_CERTIFICATE);
     // m_client->begin(*m_wifiClient, TRANSIT_LAND_SERVER, 443, endpoint, true);
-    m_client->GET();
+    client.GET();
 
     // Serial.println(endpoint);
 
     // Get the raw and the decoded stream
-    Stream& rawStream = m_client->getStream();
-    ChunkDecodingStream decodedStream(m_client->getStream());
+    Stream& rawStream = client.getStream();
+    ChunkDecodingStream decodedStream(client.getStream());
     // Choose the right stream depending on the Transfer-Encoding header
     Stream& response =
-        m_client->header("Transfer-Encoding") == "chunked" ? decodedStream : rawStream;
+        client.header("Transfer-Encoding") == "chunked" ? decodedStream : rawStream;
 
     JsonDocument filter;
     filter["meta"]["next"] = true;
@@ -172,7 +173,7 @@ bool Stop::callDeparturesAPI() {
     if (error) {
       Serial.println("Deserialization for departures failed");
       Serial.println(error.c_str());
-      m_client->end();
+      client.end();
       return false;
     }
 
@@ -189,7 +190,7 @@ bool Stop::callDeparturesAPI() {
 
     // find if routes exist
     if (responseDoc["stops"].isNull()) {
-      m_client->end();
+      client.end();
       Serial.println("stops key is not there");
       return false;
     }
@@ -342,7 +343,7 @@ bool Stop::callDeparturesAPI() {
       m_departures[i].isValid = false;
     }
 
-    m_client->end();
+    client.end();
   }
 
   return loopCnt > 0;

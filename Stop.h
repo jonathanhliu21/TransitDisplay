@@ -20,7 +20,7 @@ struct Departure {
 
 class Stop {
 public:
-  Stop(const String &oneStopId, const String &name, const String &feedId, const int &numDepartures, RouteTable *routeTable, HTTPClient *client);
+  Stop(const String &oneStopId, const String &name, const String &feedId, const int &numDepartures, RouteTable *routeTable);
 
   bool callDeparturesAPI();
 
@@ -39,7 +39,6 @@ private:
   String m_id;
   int m_numDepartures;
   RouteTable *m_routeTable;
-  HTTPClient *m_client;
 
   String m_name;
   String m_feedId;

@@ -13,7 +13,7 @@
 
 class TransitZone {
 public:
-  TransitZone(String name, RouteTable *routeTable, StopTable *stopTable, HTTPClient *client, const float lat, const float lon, const float radius);
+  TransitZone(String name, RouteTable *routeTable, StopTable *stopTable, const float lat, const float lon, const float radius);
 
   void init();
 
@@ -31,7 +31,6 @@ private:
   String m_name;
   RouteTable *m_routeTable;
   StopTable *m_stopTable;
-  HTTPClient *m_client;
   float m_lat, m_lon;
   float m_radius;
 
@@ -46,6 +45,7 @@ private:
   bool retrieveStops();
   String getWhiteListIds() const;
   void combineDepartures(std::vector<Departure> &a, const std::vector<Departure> &b);
+  void checkDepTimes(std::vector<Departure> &deps, std::time_t curTime);
 };
 
 #endif

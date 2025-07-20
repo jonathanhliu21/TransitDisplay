@@ -9,8 +9,6 @@
 #include "arduino_secrets.h"
 #include "constants.h"
 
-RouteTable::RouteTable(HTTPClient *client) : m_client(client) {}
-
 RouteTable::~RouteTable() {
   for (int i = 0; i < m_routes.size(); i++) {
     if (m_routes[i] != nullptr) {
@@ -28,24 +26,25 @@ std::vector<Route*> RouteTable::retrieveRoutes(float lat, float lon, float radiu
 
   // for "next" pages
   while (endpoint != "" && loopCnt < MAX_PAGES_PROCESSED) {
+    HTTPClient client;
     // Serial.print("endpoint: ");
     // Serial.println(endpoint);
-    m_client->collectHeaders(keys, 1);
+    client.collectHeaders(keys, 1);
 
     // m_client->begin(TRANSIT_LAND_SERVER, 443, endpoint);
-    m_client->begin(TRANSIT_LAND_SERVER, TRANSIT_LAND_PORT, endpoint, TRANSIT_LAND_ROOT_CERTIFICATE);
+    client.begin(TRANSIT_LAND_SERVER, TRANSIT_LAND_PORT, endpoint, TRANSIT_LAND_ROOT_CERTIFICATE);
     // m_client->begin(*m_wifiClient, TRANSIT_LAND_SERVER, 443, endpoint, true);
-    m_client->GET();
+    client.GET();
 
     // String responseStr = m_client->getString();
     // Serial.println(responseStr);
 
     // Get the raw and the decoded stream
-    Stream& rawStream = m_client->getStream();
+    Stream& rawStream = client.getStream();
     ChunkDecodingStream decodedStream(rawStream);
     // Choose the right stream depending on the Transfer-Encoding header
     Stream& response =
-        m_client->header("Transfer-Encoding") == "chunked" ? decodedStream : rawStream;
+        client.header("Transfer-Encoding") == "chunked" ? decodedStream : rawStream;
     // Serial.print("is chunked: ");
     // Serial.println(m_client->header("Transfer-Encoding") == "chunked");
 
@@ -68,7 +67,7 @@ std::vector<Route*> RouteTable::retrieveRoutes(float lat, float lon, float radiu
     if (error) {
       Serial.println("Deserialization for route failed");
       Serial.println(error.c_str());
-      m_client->end();
+      client.end();
       return routes;
     }
     if (responseDoc["meta"].isNull()
@@ -80,7 +79,7 @@ std::vector<Route*> RouteTable::retrieveRoutes(float lat, float lon, float radiu
 
     // find if routes exist
     if (responseDoc["routes"].isNull()) {
-      m_client->end();
+      client.end();
       Serial.println("routes key is not there");
       return routes;
     }
@@ -139,7 +138,7 @@ std::vector<Route*> RouteTable::retrieveRoutes(float lat, float lon, float radiu
       // Serial.println("Crash 4.5");
     }
 
-    m_client->end();
+    client.end();
     loopCnt++;
   }
   // Serial.println("crash 5");

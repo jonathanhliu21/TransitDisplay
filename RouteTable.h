@@ -18,7 +18,7 @@ struct Route {
 
 class RouteTable {
 public:
-  RouteTable(HTTPClient *client);
+  RouteTable() = default;
   ~RouteTable();
   
   std::vector<Route*> retrieveRoutes(float lat, float lon, float radius, std::vector<String> *whiteList = nullptr);
@@ -27,7 +27,6 @@ public:
   void debugPrintAllRoutes() const;
 
 private:
-  HTTPClient *m_client;
   
   // const std::vector<String> *m_supportedAgencies;
   std::vector<Route*> m_routes;

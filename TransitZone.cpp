@@ -61,8 +61,8 @@ void debugPrintDepartures(const std::vector<Departure> &departures) {
 }
 
 
-TransitZone::TransitZone(String name, RouteTable *routeTable, StopTable *stopTable, HTTPClient *client, const float lat, const float lon, const float radius)
-  : m_name{name}, m_routeTable{routeTable}, m_stopTable{stopTable}, m_client{client}, m_lat{lat}, m_lon{lon}, m_radius{radius}, m_isValidZone{false}, m_whiteList{nullptr}
+TransitZone::TransitZone(String name, RouteTable *routeTable, StopTable *stopTable, const float lat, const float lon, const float radius)
+  : m_name{name}, m_routeTable{routeTable}, m_stopTable{stopTable}, m_lat{lat}, m_lon{lon}, m_radius{radius}, m_isValidZone{false}, m_whiteList{nullptr}
   {}
 
 String TransitZone::getName() const { return m_name; }
@@ -99,11 +99,7 @@ void TransitZone::clearWhiteList() {
 }
 
 void TransitZone::updateDepartures(std::time_t curTime) {
-  for (int i = 0; i < m_departures.size(); i++) {
-    if (m_departures[i].agency_id == METRO_LOS_ANGELES && (long long) m_departures[i].timestamp - (long long) curTime > FIVE_DAYS) {
-      m_departures[i].timestamp -= SEVEN_DAYS;
-    }
-  }
+  checkDepTimes(m_departures, curTime);
 
   // clear departures before current time
   while (m_departures.size() > 0) {
@@ -123,17 +119,13 @@ void TransitZone::updateDepartures(std::time_t curTime) {
 
     if (!res) continue;
     std::vector<Departure> deps = stop->getDepartures();
+    checkDepTimes(deps, curTime);
     // Serial.println(deps.size());
     // debugPrintDepartures(deps);
     combineDepartures(m_departures, deps);
   }
 
-  // update a week ahaed 
-  for (int i = 0; i < m_departures.size(); i++) {
-    if (m_departures[i].agency_id == METRO_LOS_ANGELES && (long long) m_departures[i].timestamp - (long long) curTime > FIVE_DAYS) {
-      m_departures[i].timestamp -= SEVEN_DAYS;
-    }
-  }
+  checkDepTimes(m_departures, curTime);
 }
 
 bool TransitZone::retrieveStops() {
@@ -150,19 +142,20 @@ bool TransitZone::retrieveStops() {
 
    // for "next" pages
   while (endpoint != "" && loopCnt < MAX_PAGES_PROCESSED) {
+    HTTPClient client;
     // Serial.print("endpoint: ");
     // Serial.println(endpoint);
-    m_client->collectHeaders(keys, 1);
+    client.collectHeaders(keys, 1);
 
-    m_client->begin(TRANSIT_LAND_SERVER, TRANSIT_LAND_PORT, endpoint, TRANSIT_LAND_ROOT_CERTIFICATE);
-    m_client->GET();
+    client.begin(TRANSIT_LAND_SERVER, TRANSIT_LAND_PORT, endpoint, TRANSIT_LAND_ROOT_CERTIFICATE);
+    client.GET();
 
     // Get the raw and the decoded stream
-    Stream& rawStream = m_client->getStream();
+    Stream& rawStream = client.getStream();
     ChunkDecodingStream decodedStream(rawStream);
     // Choose the right stream depending on the Transfer-Encoding header
     Stream& response =
-        m_client->header("Transfer-Encoding") == "chunked" ? decodedStream : rawStream;
+        client.header("Transfer-Encoding") == "chunked" ? decodedStream : rawStream;
     
     // Serial.print("is chunked: ");
     // Serial.println(m_client->header("Transfer-Encoding") == "chunked");
@@ -183,7 +176,7 @@ bool TransitZone::retrieveStops() {
     if (error) {
       Serial.println("Deserialization for stop failed");
       Serial.println(error.c_str());
-      m_client->end();
+      client.end();
       return false;
     }
     if (responseDoc["meta"].isNull()
@@ -196,7 +189,7 @@ bool TransitZone::retrieveStops() {
     // extract first stop
     if (responseDoc["stops"].isNull()) {
       Serial.println("stops key is not there");
-      m_client->end();
+      client.end();
       return false;
     }
     JsonArrayConst arr = responseDoc["stops"].as<JsonArrayConst>();
@@ -243,13 +236,13 @@ bool TransitZone::retrieveStops() {
       }
       String feedId = stopInfo["feed_version"]["feed"]["onestop_id"].as<String>();
 
-      Stop stop(onestopId, name, feedId, NUM_ROUTES_STORED, m_routeTable, m_client);
+      Stop stop(onestopId, name, feedId, NUM_ROUTES_STORED, m_routeTable);
       m_stops.push_back(m_stopTable->addStop(stop));
 
       stopCnt++;
     }
     
-    m_client->end();
+    client.end();
     loopCnt++;
   }
 
@@ -291,5 +284,14 @@ void TransitZone::combineDepartures(std::vector<Departure> &a, const std::vector
   a.clear();
   for (int i = 0; i < std::min((int) vec.size(), NUM_ROUTES_STORED); i++) {
     a.push_back(vec[i]);
+  }
+}
+
+void TransitZone::checkDepTimes(std::vector<Departure> &deps, std::time_t curTime) {
+  // update departure if it's a week ahead
+  for (int i = 0; i < deps.size(); i++) {
+    if (deps[i].agency_id == METRO_LOS_ANGELES && (long long) deps[i].timestamp - (long long) curTime > FIVE_DAYS) {
+      deps[i].timestamp -= SEVEN_DAYS;
+    }
   }
 }
