@@ -1,6 +1,7 @@
 #include <WiFi.h>
 #include <HTTPClient.h>
 #include <vector>
+#include <time.h>
 
 #include "RouteTable.h"
 #include "StopTable.h"
@@ -8,10 +9,23 @@
 #include "arduino_secrets.h"
 #include "constants.h"
 #include "Stop.h"
+#include "Bridge.h"
 
 HTTPClient http;
 RouteTable routeTable(&http);
 StopTable stopTable;
+Bridge bridge;
+
+time_t retrieveCurTime() {
+  configTime(0, 0, TIME_URL);
+  struct tm timeinfo;
+  if (!getLocalTime(&timeinfo)) {
+    Serial.println("Cannot get local time");
+    return -1;
+  }
+  
+  return Stop::timegm_custom(&timeinfo);
+}
 
 void setup()
 {
@@ -36,6 +50,8 @@ void setup()
   delay(3000);
 
   Serial.println("Pinging API...");
+  time_t unixTime = retrieveCurTime();
+  long long ms = millis();
   
   // initialize http
   // http.useHTTP10(true);
@@ -44,14 +60,20 @@ void setup()
   std::vector<String> testFilter = {"o-9q5-metro~losangeles", "o-9qh-metrolinktrains", "o-9q9-bart", "o-9q8y-sfmta"};
 
   // TransitZone zone("Westwood / Rancho Park", &routeTable, &stopTable, &http, 34.036565, -118.424929, 100); // s-9q5c9hjyg6-westwood~ranchoparkstation
-  TransitZone zone("Westwood / Weyburn", &routeTable, &stopTable, &http, 34.062591, -118.445390, 100); // s-9q5cb8yteq-westwood~weyburn
+  // TransitZone zone("Westwood / Weyburn", &routeTable, &stopTable, &http, 34.062591, -118.445390, 100); // s-9q5cb8yteq-westwood~weyburn
   // TransitZone zone("Embarcadero", &routeTable, &stopTable, &http, 37.7928486,-122.3968361, 100); // s-9q8yyzcnrh-embarcadero
-  // TransitZone zone("Union Station", &routeTable, &stopTable, &http, 34.055244, -118.233776, 200);
+  TransitZone zone("Union Station", &routeTable, &stopTable, &http, 34.055244, -118.233776, 200);
   zone.setWhiteList(&testFilter);
-
-  zone.init();
-  zone.updateDepartures(0);
+  // zone.init();
+  // zone.updateDepartures(retrieveCurTime());
   // zone.debugPrint();
+
+  bridge.setZone(&zone);
+  bridge.setTimeSync(ms, unixTime);
+  bridge.retrieveDepartures();
+
+  bridge.debugPrintRoutes();
+  bridge.debugPrintDepartures();
 
   // Stop wwrp("s-9q5cb8yteq-westwood~weyburn", "Westwood / Weyburn", "", NUM_ROUTES_STORED, &routeTable, &http);
   // wwrp.callDeparturesAPI();

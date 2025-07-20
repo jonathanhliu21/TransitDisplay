@@ -120,7 +120,7 @@ std::vector<Route*> RouteTable::retrieveRoutes(float lat, float lon, float radiu
       if (!routeDoc["route_short_name"].is<const char*>()) {
         route.name = routeDoc["route_long_name"].as<String>();
       } else {
-        route.name = truncateRoute(routeDoc["route_short_name"].as<String>());
+        route.name = routeDoc["route_short_name"].as<String>();
       }
 
       // Serial.println("Crash 4.2");
@@ -143,7 +143,6 @@ std::vector<Route*> RouteTable::retrieveRoutes(float lat, float lon, float radiu
     loopCnt++;
   }
   // Serial.println("crash 5");
-  sortRoutes(routes);
   return routes;
 }
 
@@ -195,94 +194,8 @@ Route* RouteTable::addRoute(const Route &route) {
   newRoute->lineColor = route.lineColor;
   newRoute->textColor = route.textColor;
   newRoute->agencyId = route.agencyId;
-
-  modifyRoute(*newRoute);
   
   m_routes.push_back(newRoute);
   return newRoute;
 }
 
-void RouteTable::modifyRoute(Route &route) const {
-  route.name = truncateRoute(route.name);
-
-  // color the LA metro buses
-  if (route.agencyId == "o-9q5-metro~losangeles") {
-    if (route.lineColor == 0 && route.textColor == 0xffffff) {
-      route.lineColor = 0xC54858;
-    }
-    if (route.lineColor == 0 && route.textColor == 0) {
-      route.lineColor = 0xfa7343;
-      route.textColor = 0xffffff;
-    }
-  }
-}
-
-String RouteTable::truncateRoute(const String &routeStr) const {
-  String result = routeStr;
-
-  // --- Cut off "Metro" at the beginning ---
-  if (result.startsWith("Metro")) {
-    // Take the substring that starts after the word "Metro".
-    result = result.substring(String("Metro").length());
-  }
-
-  result.trim();
-
-  // --- Cut off "Line" at the end ---
-  if (result.endsWith("Line")) {
-    // Take the substring from the beginning up to where "Line" starts.
-    result = result.substring(0, result.length() - String("Line").length());
-  }
-
-  // --- Truncate stuff like "J Line formerly Silver Line with services 910 and 950 to Harbor Gateway and San Pedro respectively" ---
-  // Also avoids incorrectly shortening names like "Rapid 6".
-  int firstSpaceIndex = result.indexOf(' ');
-
-  // Only check if a space exists.
-  if (firstSpaceIndex != -1) {
-    bool shouldTruncate = false;
-    
-    // Get the parts before and after the first space.
-    String prefix = result.substring(0, firstSpaceIndex);
-    String suffix = result.substring(firstSpaceIndex);
-    suffix.trim(); // Clean up suffix for inspection.
-
-    // Heuristic A (New): If the first word is a single letter or digit, truncate.
-    if (prefix.length() == 1 && (isAlpha(prefix.charAt(0)) || isDigit(prefix.charAt(0)))) {
-        shouldTruncate = true;
-    }
-
-    // Heuristic B (Old): If not, truncate only if the suffix is "complex".
-    if (!shouldTruncate) {
-        bool isComplex = false;
-        // Check if the suffix contains anything other than digits.
-        for (int i = 0; i < suffix.length(); i++) {
-          if (!isDigit(suffix.charAt(i))) {
-            isComplex = true; // Found a non-digit character, so it's complex.
-            break;
-          }
-        }
-        if (isComplex) {
-            shouldTruncate = true;
-        }
-    }
-
-    // If either heuristic decided we should truncate, do it.
-    if (shouldTruncate) {
-      result = prefix; // result becomes just the prefix
-    }
-  }
-
-  // Perform a final trim to clean up any trailing space and return the result.
-  result.trim();
-  return result;
-}
-
-void RouteTable::sortRoutes(std::vector<Route *> &routes) {
-  std::sort(routes.begin(), routes.end(), [](Route * const &a, Route * const &b) {
-    if (a->agencyId == b->agencyId) {
-      return a->name < b->name;
-    }
-    return a->agencyId < b->agencyId;
-  });
-}

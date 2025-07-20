@@ -1,0 +1,329 @@
+#include "Bridge.h"
+
+#include <algorithm>
+#include <set>
+#include <vector>
+
+#include "TransitZone.h"
+#include "constants.h"
+
+
+void Bridge::setZone(TransitZone *zone) {
+  m_zone = zone;
+  m_zone->init();
+  m_name = m_zone->getName();
+  
+  std::vector<Route *> rts = m_zone->getRoutes();
+  sortRoutes(rts);
+  m_routes.clear();
+  for (int i = 0; i < rts.size(); i++) {
+    m_routes.push_back(*rts[i]);
+  }
+
+  modifyRoutes();
+}
+
+void Bridge::setTimeSync(time_t startTimeMillis, time_t startTimeUTC) {
+  m_startTimeS = startTimeMillis / 1000;
+  m_startTimeUTC = startTimeUTC;
+}
+
+void Bridge::retrieveDepartures() {
+  // Serial.print("Current time: ");
+  time_t curTime = retrieveTime();
+  m_zone->updateDepartures(curTime);
+  std::vector<Departure> departures = m_zone->getDepartures();
+  curTime = retrieveTime();
+
+  m_departures.clear();
+
+  for (Departure dep : departures) {
+    if (!dep.isValid) {
+      continue;
+    }
+
+    long long timeDelay = dep.delay;
+
+    if (dep.agency_id == METRO_LOS_ANGELES) {
+      if (timeDelay < -FIVE_DAYS) {
+        timeDelay += SEVEN_DAYS;
+      }
+      if (timeDelay > FIVE_DAYS) {
+        timeDelay -= SEVEN_DAYS;
+      }
+    }
+    
+    // Serial.println(timeDelay);
+    
+    BridgeDeparture bridgeDep;
+    bridgeDep.direction = truncateStop(dep.direction, true);
+    bridgeDep.routeColor = dep.route->lineColor;
+    bridgeDep.textColor = dep.route->textColor;
+    bridgeDep.line = truncateRoute(dep.route->name);
+    bridgeDep.delayColor = getDelayColor(timeDelay, dep.isRealTime);
+    bridgeDep.mins = (dep.timestamp - curTime) / 60;
+    m_departures.push_back(bridgeDep);
+  }
+}
+
+void Bridge::debugPrintRoutes() const {
+  Serial.println(F("--- Route Info ---"));
+  if (m_routes.size() == 0) {
+    Serial.println("No routes found");
+    return;
+  }
+  
+  for (Route route: m_routes) {
+    Serial.print(F("ID: "));
+    Serial.println(route.id);
+
+    Serial.print(F("Name: "));
+    Serial.println(route.name);
+
+    Serial.print(F("Line Color: 0x"));
+    Serial.println(route.lineColor, HEX);
+
+    Serial.print(F("Text Color: 0x"));
+    Serial.println(route.textColor, HEX);
+
+    Serial.print(F("Agency ID: "));
+    Serial.println(route.agencyId);
+    
+    Serial.println(F("------------------"));
+  }
+}
+
+void Bridge::debugPrintDepartures() const {
+  Serial.println(F("--- Departures Info ---"));
+  if (m_departures.size() == 0) {
+    Serial.println("No departures found");
+    return;
+  }
+
+  for (BridgeDeparture dep : m_departures) {
+    Serial.print(dep.textColor, HEX);
+    Serial.print("\t");
+    Serial.print(dep.routeColor, HEX);
+    Serial.print("\t");
+    Serial.print(dep.line);
+    Serial.print("\t");
+    Serial.print(dep.direction);
+    Serial.print("\t\t");
+    Serial.print(dep.mins);
+    Serial.print("\t");
+    Serial.println(dep.delayColor, HEX);
+    Serial.println(F("------------------"));
+  }
+}
+
+time_t Bridge::retrieveTime() const {
+  return millis() / 1000 - m_startTimeS + m_startTimeUTC;
+}
+
+int Bridge::getDelayColor(int delay, bool isRealTime) const {
+  if (!isRealTime) return NO_RT_INFO_COLOR;
+  if (delay > DELAY_CUTOFF) return DELAYED_COLOR;
+  if (delay < -DELAY_CUTOFF) return EARLY_COLOR;
+  return ON_TIME_COLOR;
+}
+
+void Bridge::modifyRoutes() {
+  // first combine directions
+  auto cmp = [](const Route &a, const Route &b) {
+    if (a.agencyId == b.agencyId) {
+      return a.name < b.name;
+    }
+    return a.agencyId < b.agencyId;
+  };
+  std::set<Route, decltype(cmp)> unique_base_names(cmp);
+
+  for (const Route& r : m_routes) {
+    // Find the position of the last hyphen '-'.
+    // Arduino's lastIndexOf() returns -1 if the character is not found.
+    Route route = r;
+    String line = r.name;
+    int pos = line.lastIndexOf('-');
+
+    if (pos != -1) {
+        // Extract the suffix using the substring() method.
+        String suffix = line.substring(pos + 1);
+
+        // Check if the suffix is a valid cardinal direction.
+        if (suffix == "N" || suffix == "S" || suffix == "E" || suffix == "W") {
+            // It's a valid directional line, so extract the base name.
+            route.name = line.substring(0, pos);
+            unique_base_names.insert(route);
+        } else {
+            // Not a valid direction (e.g., "Red-Express"), so use the whole string.
+            unique_base_names.insert(route);
+        }
+    } else {
+        // No hyphen, so use the whole string.
+        unique_base_names.insert(route);
+    }
+  }
+  m_routes.assign(unique_base_names.begin(), unique_base_names.end());
+
+  // truncate names
+  for (int i = 0; i < m_routes.size(); i++) {
+    m_routes[i].name = truncateRoute(m_routes[i].name);
+  }
+
+  // color LA metro buses
+  for (int i = 0; i < m_routes.size(); i++) {
+    Route &route = m_routes[i];
+    if (route.agencyId == METRO_LOS_ANGELES) {
+      if (route.lineColor == 0 && route.textColor == 0xffffff) {
+        route.lineColor = 0xC54858;
+      }
+      if (route.lineColor == 0 && route.textColor == 0) {
+        route.lineColor = 0xfa7343;
+        route.textColor = 0xffffff;
+      }
+    }
+  }
+}
+
+// The function that performs the truncation based on the specified rules.
+String Bridge::truncateStop(const String &name, const bool truncateDowntown) const {
+  // We will work on a copy of the name so we don't modify the original reference.
+  String result = name;
+
+  // --- Rule 1: Cut off any line number / service and a dash at the beginning ---
+  // This rule uses a combined heuristic to decide whether to truncate.
+  int dashIndex = result.indexOf(" - ");
+
+  // Only proceed if a dash is found.
+  if (dashIndex != -1) {
+    bool shouldTruncate = false;
+
+    // Heuristic A: Check if the prefix is purely numeric (e.g., "2 - ...")
+    String prefix = result.substring(0, dashIndex);
+    prefix.trim(); // Remove whitespace for accurate checking
+    
+    bool prefixIsNumericOnly = true;
+    if (prefix.length() > 0) {
+      for (int i = 0; i < prefix.length(); i++) {
+        if (!isDigit(prefix.charAt(i))) {
+          prefixIsNumericOnly = false;
+          break;
+        }
+      }
+    } else {
+      prefixIsNumericOnly = false;
+    }
+    
+    if (prefixIsNumericOnly) {
+      shouldTruncate = true;
+    }
+
+    // Heuristic B: Check if it looks like a long headsign (e.g., "... Downtown ... Station")
+    // This is a fallback for non-numeric service names like "Metro E Line - ..."
+    if (!shouldTruncate && (result.indexOf("Downtown") != -1 || result.indexOf("Station") != -1)) {
+      shouldTruncate = true;
+    }
+
+    // If either heuristic passed, perform the truncation.
+    if (shouldTruncate) {
+      result = result.substring(dashIndex + 3); // Length of " - " is 3
+    }
+  }
+
+  // Trim whitespace after every operation to keep the string clean.
+  result.trim();
+
+  // --- Rule 2: Cut off "Downtown" at the beginning ---
+  if (truncateDowntown && result.startsWith("Downtown")) {
+    // Take the substring that starts after the word "Downtown".
+    result = result.substring(String("Downtown").length());
+  }
+
+  result.trim();
+
+  // --- Rule 3: Cut off "Station" at the end ---
+  if (result.endsWith("Station")) {
+    // Take the substring from the beginning up to where "Station" starts.
+    result = result.substring(0, result.length() - String("Station").length());
+  }
+
+  // Also cut off "Rapid" at the end
+  if (result.endsWith("Rapid")) {
+    // Take the substring from the beginning up to where "Rapid" starts.
+    result = result.substring(0, result.length() - String("Rapid").length());
+  }
+
+  // Perform a final trim to clean up any trailing space and return the result.
+  result.trim();
+  return result;
+}
+
+String Bridge::truncateRoute(const String &routeStr) const {
+  String result = routeStr;
+
+  // --- Cut off "Metro" at the beginning ---
+  if (result.startsWith("Metro")) {
+    // Take the substring that starts after the word "Metro".
+    result = result.substring(String("Metro").length());
+  }
+
+  result.trim();
+
+  // --- Cut off "Line" at the end ---
+  if (result.endsWith("Line")) {
+    // Take the substring from the beginning up to where "Line" starts.
+    result = result.substring(0, result.length() - String("Line").length());
+  }
+
+  // --- Truncate stuff like "J Line formerly Silver Line with services 910 and 950 to Harbor Gateway and San Pedro respectively" ---
+  // Also avoids incorrectly shortening names like "Rapid 6".
+  int firstSpaceIndex = result.indexOf(' ');
+
+  // Only check if a space exists.
+  if (firstSpaceIndex != -1) {
+    bool shouldTruncate = false;
+    
+    // Get the parts before and after the first space.
+    String prefix = result.substring(0, firstSpaceIndex);
+    String suffix = result.substring(firstSpaceIndex);
+    suffix.trim(); // Clean up suffix for inspection.
+
+    // Heuristic A (New): If the first word is a single letter or digit, truncate.
+    if (prefix.length() == 1 && (isAlpha(prefix.charAt(0)) || isDigit(prefix.charAt(0)))) {
+        shouldTruncate = true;
+    }
+
+    // Heuristic B (Old): If not, truncate only if the suffix is "complex".
+    if (!shouldTruncate) {
+        bool isComplex = false;
+        // Check if the suffix contains anything other than digits.
+        for (int i = 0; i < suffix.length(); i++) {
+          if (!isDigit(suffix.charAt(i))) {
+            isComplex = true; // Found a non-digit character, so it's complex.
+            break;
+          }
+        }
+        if (isComplex) {
+            shouldTruncate = true;
+        }
+    }
+
+    // If either heuristic decided we should truncate, do it.
+    if (shouldTruncate) {
+      result = prefix; // result becomes just the prefix
+    }
+  }
+
+  // Perform a final trim to clean up any trailing space and return the result.
+  result.trim();
+  return result;
+}
+
+
+void Bridge::sortRoutes(std::vector<Route *> &routes) const {
+  std::sort(routes.begin(), routes.end(), [](Route * const &a, Route * const &b) {
+    if (a->agencyId == b->agencyId) {
+      return a->name < b->name;
+    }
+    return a->agencyId < b->agencyId;
+  });
+}

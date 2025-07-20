@@ -99,8 +99,16 @@ void TransitZone::clearWhiteList() {
 }
 
 void TransitZone::updateDepartures(std::time_t curTime) {
+  for (int i = 0; i < m_departures.size(); i++) {
+    if (m_departures[i].agency_id == METRO_LOS_ANGELES && (long long) m_departures[i].timestamp - (long long) curTime > FIVE_DAYS) {
+      m_departures[i].timestamp -= SEVEN_DAYS;
+    }
+  }
+
   // clear departures before current time
   while (m_departures.size() > 0) {
+    // Serial.print("departures size: ");
+    // Serial.println(m_departures.size());
     if (curTime > m_departures.begin()->timestamp) {
       m_departures.erase(m_departures.begin());
     } else {
@@ -118,6 +126,13 @@ void TransitZone::updateDepartures(std::time_t curTime) {
     // Serial.println(deps.size());
     // debugPrintDepartures(deps);
     combineDepartures(m_departures, deps);
+  }
+
+  // update a week ahaed 
+  for (int i = 0; i < m_departures.size(); i++) {
+    if (m_departures[i].agency_id == METRO_LOS_ANGELES && (long long) m_departures[i].timestamp - (long long) curTime > FIVE_DAYS) {
+      m_departures[i].timestamp -= SEVEN_DAYS;
+    }
   }
 }
 

@@ -6,11 +6,23 @@
 #define MAX_PAGES_PROCESSED 5
 #define NEXT_N_SECONDS 6000
 
+#define ON_TIME_COLOR 0x00FF00
+#define DELAYED_COLOR 0xFF0000
+#define EARLY_COLOR 0xFFFF00
+#define NO_RT_INFO_COLOR 0xFFFFFF
+#define DELAY_CUTOFF 60
+
+#define FIVE_DAYS 432000 // s
+#define SEVEN_DAYS 604800 // s
+
+#define METRO_LOS_ANGELES "o-9q5-metro~losangeles"
+
 // API calls
 #define TRANSIT_LAND_SERVER "api.transit.land"
 #define TRANSIT_LAND_PORT 443
 #define STOPS_ENDPOINT_PREFIX "/api/v2/rest/stops"
 #define ROUTES_ENDPOINT_PREFIX "/api/v2/rest/routes"
+#define TIME_URL "pool.ntp.org"
 
 const char * const TRANSIT_LAND_ROOT_CERTIFICATE = \
 "-----BEGIN CERTIFICATE-----\n" \

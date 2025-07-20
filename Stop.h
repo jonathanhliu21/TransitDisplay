@@ -14,7 +14,7 @@ struct Departure {
   std::time_t timestamp;
   bool isRealTime;
   String agency_id;
-  int delay;
+  long long delay;
   bool isValid;
 };
 
@@ -33,6 +33,8 @@ public:
   float getLon() const;
   void debugPrintStop() const;
 
+  static time_t timegm_custom(struct tm *timeinfo);
+
 private:
   String m_id;
   int m_numDepartures;
@@ -44,8 +46,6 @@ private:
 
   std::vector<Departure> m_departures;
   unsigned long long m_lastRetrieveTime;
-
-  String truncateName(const String &name, const bool truncateDowntown) const;
 };
 
 #endif

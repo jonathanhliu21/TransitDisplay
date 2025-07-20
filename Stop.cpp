@@ -13,9 +13,8 @@
 #include "RouteTable.h"
 #include "arduino_secrets.h"
 
-
 // A portable implementation of timegm()
-time_t timegm_custom(struct tm *timeinfo) {
+time_t Stop::timegm_custom(struct tm *timeinfo) {
   time_t result;
   
   // 1. Save the current TZ environment variable
@@ -42,7 +41,7 @@ time_t timegm_custom(struct tm *timeinfo) {
 Stop::Stop(const String &oneStopId, const String &name, const String &feedId, const int &numDepartures, RouteTable *routeTable, HTTPClient *client)
   : m_id{ oneStopId }, m_numDepartures{ numDepartures }, m_feedId{feedId}, m_routeTable{ routeTable }, m_client{ client },
     m_lastRetrieveTime{ 0 } {
-  m_name = truncateName(name, false);  // Don't truncate "Downtown" when retrieving station name
+  m_name = name;  // Don't truncate "Downtown" when retrieving station name
   m_departures.reserve(m_numDepartures);
   m_departures.resize(m_numDepartures);
 
@@ -268,7 +267,7 @@ bool Stop::callDeparturesAPI() {
         } else {
           headsign = departureDoc["trip"]["trip_headsign"].as<String>();
         }
-        departure.direction = truncateName(headsign, true); // truncate downtown this time
+        departure.direction = headsign;
 
         // Serial.println("here 6");
 
@@ -286,6 +285,7 @@ bool Stop::callDeparturesAPI() {
         // timestamp and delay
         if (departureDoc["departure"].isNull()) continue;
         String timestamp;
+        String timestampScheduled;
         if (!departure.isRealTime) {
           // Serial.println("not real time");
           // Serial.println(departureDoc["departure"].size());
@@ -294,20 +294,32 @@ bool Stop::callDeparturesAPI() {
           departure.delay = 0;
         } else {
           // Serial.println("real time");
-          if (departureDoc["departure"]["estimated_delay"].isNull() || departureDoc["departure"]["estimated_utc"].isNull()) {
+          if (departureDoc["departure"]["estimated_utc"].isNull()) {
             // some scheduled departures dont have estimated times
             departure.isRealTime = false;
             if (departureDoc["departure"]["scheduled_utc"].isNull()) continue;
             timestamp = departureDoc["departure"]["scheduled_utc"].as<String>();
             departure.delay = 0;
           } else {
+            if (departureDoc["departure"]["estimated_delay"].isNull()) {
+              timestampScheduled = departureDoc["departure"]["scheduled_utc"].as<String>();
+            } else {
+              departure.delay = departureDoc["departure"]["estimated_delay"].as<int>();
+            }
             timestamp = departureDoc["departure"]["estimated_utc"].as<String>();
-            departure.delay = departureDoc["departure"]["estimated_delay"].as<int>();
           }
         }
+
         std::tm timeinfo;
         strptime(timestamp.c_str(), "%Y-%m-%dT%H:%M:%SZ", &timeinfo);
         departure.timestamp = timegm_custom(&timeinfo);
+
+        if (timestampScheduled != "" && timestampScheduled != "null") {
+          std::tm timeinfo2;
+          strptime(timestampScheduled.c_str(), "%Y-%m-%dT%H:%M:%SZ", &timeinfo2);
+          time_t timestampScheduledT = timegm_custom(&timeinfo2);
+          departure.delay = departure.timestamp - timestampScheduledT;
+        }
 
         // Serial.println("here 8");
 
@@ -336,69 +348,4 @@ bool Stop::callDeparturesAPI() {
   return loopCnt > 0;
 }
 
-// The function that performs the truncation based on the specified rules.
-String Stop::truncateName(const String &name, const bool truncateDowntown) const {
-  // We will work on a copy of the name so we don't modify the original reference.
-  String result = name;
 
-  // --- Rule 1: Cut off any line number / service and a dash at the beginning ---
-  // This rule uses a combined heuristic to decide whether to truncate.
-  int dashIndex = result.indexOf(" - ");
-
-  // Only proceed if a dash is found.
-  if (dashIndex != -1) {
-    bool shouldTruncate = false;
-
-    // Heuristic A: Check if the prefix is purely numeric (e.g., "2 - ...")
-    String prefix = result.substring(0, dashIndex);
-    prefix.trim(); // Remove whitespace for accurate checking
-    
-    bool prefixIsNumericOnly = true;
-    if (prefix.length() > 0) {
-      for (int i = 0; i < prefix.length(); i++) {
-        if (!isDigit(prefix.charAt(i))) {
-          prefixIsNumericOnly = false;
-          break;
-        }
-      }
-    } else {
-      prefixIsNumericOnly = false;
-    }
-    
-    if (prefixIsNumericOnly) {
-      shouldTruncate = true;
-    }
-
-    // Heuristic B: Check if it looks like a long headsign (e.g., "... Downtown ... Station")
-    // This is a fallback for non-numeric service names like "Metro E Line - ..."
-    if (!shouldTruncate && (result.indexOf("Downtown") != -1 || result.indexOf("Station") != -1)) {
-      shouldTruncate = true;
-    }
-
-    // If either heuristic passed, perform the truncation.
-    if (shouldTruncate) {
-      result = result.substring(dashIndex + 3); // Length of " - " is 3
-    }
-  }
-
-  // Trim whitespace after every operation to keep the string clean.
-  result.trim();
-
-  // --- Rule 2: Cut off "Downtown" at the beginning ---
-  if (truncateDowntown && result.startsWith("Downtown")) {
-    // Take the substring that starts after the word "Downtown".
-    result = result.substring(String("Downtown").length());
-  }
-
-  result.trim();
-
-  // --- Rule 3: Cut off "Station" at the end ---
-  if (result.endsWith("Station")) {
-    // Take the substring from the beginning up to where "Station" starts.
-    result = result.substring(0, result.length() - String("Station").length());
-  }
-
-  // Perform a final trim to clean up any trailing space and return the result.
-  result.trim();
-  return result;
-}
