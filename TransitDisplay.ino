@@ -50,11 +50,12 @@ void setup()
   zone.setWhiteList(&testFilter);
 
   zone.init();
-  zone.debugPrint();
+  zone.updateDepartures(0);
+  // zone.debugPrint();
 
-  Stop wwrp("s-9q5cb8yteq-westwood~weyburn", "Westwood / Weyburn", "", NUM_ROUTES_STORED, &routeTable, &http);
-  wwrp.callDeparturesAPI();
-  wwrp.debugPrintStop();
+  // Stop wwrp("s-9q5cb8yteq-westwood~weyburn", "Westwood / Weyburn", "", NUM_ROUTES_STORED, &routeTable, &http);
+  // wwrp.callDeparturesAPI();
+  // wwrp.debugPrintStop();
 
   // Serial.println("Valid Stop: " + String(westwoodRancho.getIsValidStop()));
   // Serial.println("Stop Name: " + String(westwoodRancho.getName()));
@@ -63,6 +64,7 @@ void setup()
   //   Route *r = routes->at(i);
   //   printRoute(r);
   // }
+  Serial.println("Finished");
 }
 
 void loop()

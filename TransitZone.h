@@ -8,6 +8,7 @@
 #include "StopTable.h"
 #include "Stop.h"
 
+#include <ctime>
 #include <vector>
 
 class TransitZone {
@@ -18,9 +19,12 @@ public:
 
   String getName() const;
   bool getIsValidZone() const;
+  std::vector<Route *> getRoutes() const;
+  std::vector<Departure> getDepartures() const;
 
   void setWhiteList(std::vector<String> *whiteList);
   void clearWhiteList();
+  void updateDepartures(std::time_t curTime);
 
   void debugPrint() const;
 private:
@@ -35,11 +39,13 @@ private:
 
   std::vector<Route*> m_routes;
   std::vector<Stop*> m_stops;
+  std::vector<Departure> m_departures;
 
   std::vector<String> *m_whiteList;
 
   bool retrieveStops();
   String getWhiteListIds() const;
+  void combineDepartures(std::vector<Departure> &a, const std::vector<Departure> &b);
 };
 
 #endif

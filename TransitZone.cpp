@@ -4,6 +4,9 @@
 #include <HTTPClient.h>
 #include <StreamUtils.h>
 
+#include <algorithm>
+#include <ctime>
+#include <time.h>
 #include <vector>
 
 #include "RouteTable.h"
@@ -11,9 +14,61 @@
 #include "constants.h"
 #include "arduino_secrets.h"
 
+void debugPrintDepartures(const std::vector<Departure> &departures) {
+  // Check if there are any departures to print
+  if (departures.empty()) {
+    Serial.println(F("    No departures found."));
+    return;
+  }
+
+  // Iterate over each departure in the vector
+  for (const auto& departure : departures) {
+    Serial.println(F("    ----------------------"));
+
+    // Print Route ID, ensuring the route pointer is not null
+    if (departure.route) {
+      Serial.print(F("    Route: "));
+      Serial.println(departure.route->id);
+    } else {
+      Serial.println(F("    Route: [Unknown]"));
+    }
+
+    // Print Direction
+    Serial.print(F("    Direction: "));
+    Serial.println(departure.direction);
+
+    // Print Timestamp
+    Serial.print(F("    Timestamp: "));
+    Serial.println(departure.timestamp);
+
+    // Print Real-Time Status
+    Serial.print(F("    Is Real-Time: "));
+    Serial.println(departure.isRealTime ? "Yes" : "No");
+
+    // Print Agency ID
+    Serial.print(F("    Agency: "));
+    Serial.println(departure.agency_id);
+
+    // Print Delay
+    Serial.print(F("    Delay (seconds): "));
+    Serial.println(departure.delay);
+
+    // Print is valid
+    Serial.print(F("    Is Valid: "));
+    Serial.println(departure.isValid ? "Yes" : "No");
+  }
+  Serial.println(F("    ----------------------"));
+}
+
+
 TransitZone::TransitZone(String name, RouteTable *routeTable, StopTable *stopTable, HTTPClient *client, const float lat, const float lon, const float radius)
   : m_name{name}, m_routeTable{routeTable}, m_stopTable{stopTable}, m_client{client}, m_lat{lat}, m_lon{lon}, m_radius{radius}, m_isValidZone{false}, m_whiteList{nullptr}
   {}
+
+String TransitZone::getName() const { return m_name; }
+bool TransitZone::getIsValidZone() const { return m_isValidZone; }
+std::vector<Route *> TransitZone::getRoutes() const { return m_routes; }
+std::vector<Departure> TransitZone::getDepartures() const { return m_departures; }
 
 void TransitZone::init() {
   m_routes = m_routeTable->retrieveRoutes(m_lat, m_lon, m_radius, m_whiteList);
@@ -31,6 +86,8 @@ void TransitZone::debugPrint() const {
 
   m_routeTable->debugPrintAllRoutes();
   // m_stopTable->debugPrintAllStops();
+
+  debugPrintDepartures(m_departures);
 }
 
 void TransitZone::setWhiteList(std::vector<String> *whiteList) {
@@ -39,6 +96,29 @@ void TransitZone::setWhiteList(std::vector<String> *whiteList) {
 
 void TransitZone::clearWhiteList() {
   m_whiteList = nullptr;
+}
+
+void TransitZone::updateDepartures(std::time_t curTime) {
+  // clear departures before current time
+  while (m_departures.size() > 0) {
+    if (curTime > m_departures.begin()->timestamp) {
+      m_departures.erase(m_departures.begin());
+    } else {
+      break;
+    }
+  }
+
+  for (Stop *stop : m_stops) {
+    bool res = stop->callDeparturesAPI();
+    // Serial.print("Retrieving result: ");
+    // Serial.println(res);
+
+    if (!res) continue;
+    std::vector<Departure> deps = stop->getDepartures();
+    // Serial.println(deps.size());
+    // debugPrintDepartures(deps);
+    combineDepartures(m_departures, deps);
+  }
 }
 
 bool TransitZone::retrieveStops() {
@@ -170,4 +250,31 @@ String TransitZone::getWhiteListIds() const {
   }
 
   return res;
+}
+
+void TransitZone::combineDepartures(std::vector<Departure> &a, const std::vector<Departure> &b) {
+  std::vector<Departure> vec;
+  for (Departure dep : a) {
+    if (dep.isValid) {
+      vec.push_back(dep);
+    }
+  }
+
+  for (Departure dep : b) {
+    if (dep.isValid) {
+      vec.push_back(dep);
+    }
+  }
+
+  std::sort(vec.begin(), vec.end(), [](const Departure &a, const Departure &b) {
+    return a.timestamp < b.timestamp;
+  });
+
+  // Serial.println(b.size());
+  // Serial.println(vec.size());
+
+  a.clear();
+  for (int i = 0; i < std::min((int) vec.size(), NUM_ROUTES_STORED); i++) {
+    a.push_back(vec[i]);
+  }
 }

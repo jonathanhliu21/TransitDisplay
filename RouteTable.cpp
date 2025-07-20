@@ -143,7 +143,7 @@ std::vector<Route*> RouteTable::retrieveRoutes(float lat, float lon, float radiu
     loopCnt++;
   }
   // Serial.println("crash 5");
-
+  sortRoutes(routes);
   return routes;
 }
 
@@ -276,4 +276,13 @@ String RouteTable::truncateRoute(const String &routeStr) const {
   // Perform a final trim to clean up any trailing space and return the result.
   result.trim();
   return result;
+}
+
+void RouteTable::sortRoutes(std::vector<Route *> &routes) {
+  std::sort(routes.begin(), routes.end(), [](Route * const &a, Route * const &b) {
+    if (a->agencyId == b->agencyId) {
+      return a->name < b->name;
+    }
+    return a->agencyId < b->agencyId;
+  });
 }

@@ -36,6 +36,8 @@ private:
 
   void modifyRoute(Route &route) const;
   String truncateRoute(const String &routeStr) const;
+
+  void sortRoutes(std::vector<Route *> &routes);
 };
 
 #endif

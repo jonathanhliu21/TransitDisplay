@@ -5,12 +5,13 @@
 #include "RouteTable.h"
 
 #include <vector>
+#include <ctime>
 #include <HTTPClient.h>
 
 struct Departure {
   Route *route;
   String direction;
-  String timestamp;
+  std::time_t timestamp;
   bool isRealTime;
   String agency_id;
   int delay;
@@ -27,7 +28,7 @@ public:
   int getNumDepartures() const;
   String getName() const;
   String getFeedId() const;
-  const std::vector<Departure> *getDepartures() const;
+  std::vector<Departure> getDepartures() const;
   float getLat() const;
   float getLon() const;
   void debugPrintStop() const;

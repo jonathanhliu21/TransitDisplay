@@ -1,15 +1,43 @@
 #include "Stop.h"
 
 #include <cstdlib>
+#include <ctime>
 #include <vector>
 #include <algorithm>
 #include <ArduinoJson.h>
 #include <HTTPClient.h>
 #include <StreamUtils.h>
+#include <stdlib.h> // For getenv, setenv, and unsetenv
 
 #include "constants.h"
 #include "RouteTable.h"
 #include "arduino_secrets.h"
+
+
+// A portable implementation of timegm()
+time_t timegm_custom(struct tm *timeinfo) {
+  time_t result;
+  
+  // 1. Save the current TZ environment variable
+  char *tz_original = getenv("TZ");
+  
+  // 2. Set the timezone to UTC
+  setenv("TZ", "", 1); // An empty string or "UTC0" means UTC
+  tzset(); // Apply the new timezone
+  
+  // 3. Call mktime(), which now thinks the struct is in UTC
+  result = mktime(timeinfo);
+  
+  // 4. Restore the original timezone
+  if (tz_original) {
+    setenv("TZ", tz_original, 1);
+  } else {
+    unsetenv("TZ");
+  }
+  tzset(); // Apply the original timezone back
+  
+  return result;
+}
 
 Stop::Stop(const String &oneStopId, const String &name, const String &feedId, const int &numDepartures, RouteTable *routeTable, HTTPClient *client)
   : m_id{ oneStopId }, m_numDepartures{ numDepartures }, m_feedId{feedId}, m_routeTable{ routeTable }, m_client{ client },
@@ -36,8 +64,8 @@ String Stop::getName() const {
 String Stop::getFeedId() const {
   return m_feedId;
 }
-const std::vector<Departure> *Stop::getDepartures() const {
-  return &m_departures;
+std::vector<Departure> Stop::getDepartures() const {
+  return m_departures;
 }
 
 void Stop::debugPrintStop() const {
@@ -90,7 +118,7 @@ void Stop::debugPrintStop() const {
 }
 
 bool Stop::callDeparturesAPI() {
-  String endpoint = String(STOPS_ENDPOINT_PREFIX) + "/" + m_id + "/departures?api_key=" + SECRET_API_KEY + "&limit=" + m_numDepartures;
+  String endpoint = String(STOPS_ENDPOINT_PREFIX) + "/" + m_id + "/departures?api_key=" + SECRET_API_KEY + "&limit=" + m_numDepartures + "&next=" + NEXT_N_SECONDS;
   const char* keys[] = {"Transfer-Encoding"};
 
   int loopCnt = 0;
@@ -212,6 +240,7 @@ bool Stop::callDeparturesAPI() {
         if (departureDoc["trip"].isNull()) continue;
 
         Departure departure;
+        departure.isValid = true;
         departure.isRealTime = true;
         if (departureDoc["schedule_relationship"].isNull() && (departureDoc["trip"]["schedule_relationship"].isNull())) {
           departure.isRealTime = false;
@@ -254,18 +283,29 @@ bool Stop::callDeparturesAPI() {
 
         // timestamp and delay
         if (departureDoc["departure"].isNull()) continue;
+        String timestamp;
         if (!departure.isRealTime) {
           // Serial.println("not real time");
           // Serial.println(departureDoc["departure"].size());
           if (departureDoc["departure"]["scheduled_utc"].isNull()) continue;
-          departure.timestamp = departureDoc["departure"]["scheduled_utc"].as<String>();
+          timestamp = departureDoc["departure"]["scheduled_utc"].as<String>();
           departure.delay = 0;
         } else {
           // Serial.println("real time");
-          if (departureDoc["departure"]["estimated_delay"].isNull() || departureDoc["departure"]["estimated_utc"].isNull()) continue;
-          departure.timestamp = departureDoc["departure"]["estimated_utc"].as<String>();
-          departure.delay = departureDoc["departure"]["estimated_delay"].as<int>();
+          if (departureDoc["departure"]["estimated_delay"].isNull() || departureDoc["departure"]["estimated_utc"].isNull()) {
+            // some scheduled departures dont have estimated times
+            departure.isRealTime = false;
+            if (departureDoc["departure"]["scheduled_utc"].isNull()) continue;
+            timestamp = departureDoc["departure"]["scheduled_utc"].as<String>();
+            departure.delay = 0;
+          } else {
+            timestamp = departureDoc["departure"]["estimated_utc"].as<String>();
+            departure.delay = departureDoc["departure"]["estimated_delay"].as<int>();
+          }
         }
+        std::tm timeinfo;
+        strptime(timestamp.c_str(), "%Y-%m-%dT%H:%M:%SZ", &timeinfo);
+        departure.timestamp = timegm_custom(&timeinfo);
 
         // Serial.println("here 8");
 
@@ -279,6 +319,9 @@ bool Stop::callDeparturesAPI() {
         loopCnt++;
       }
     }
+
+    // Serial.print("Num processed: ");
+    // Serial.println(numDeparturesProcessed);
 
     // mark any unused slots in departures array as invalid
     for (int i = numDeparturesProcessed; i < m_numDepartures; i++) {

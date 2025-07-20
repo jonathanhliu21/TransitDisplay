@@ -4,6 +4,7 @@
 #define NUM_ROUTES_STORED 10
 #define REFRESH_PERIOD 30000 // ms
 #define MAX_PAGES_PROCESSED 5
+#define NEXT_N_SECONDS 6000
 
 // API calls
 #define TRANSIT_LAND_SERVER "api.transit.land"
