@@ -55,12 +55,12 @@ void setup()
   // http.useHTTP10(true);
 
   // ----- TESTING ----
-  std::vector<String> testFilter = {/*"o-9q5-metro~losangeles",*/ "o-9qh-metrolinktrains", "o-9q9-bart", "o-9q8y-sfmta"};
+  std::vector<String> testFilter = {"o-9q5-metro~losangeles", "o-9qh-metrolinktrains", "o-9q9-bart", "o-9q8y-sfmta"};
 
-  // TransitZone zone("Westwood / Rancho Park", &routeTable, &stopTable, 34.036565, -118.424929, 100); // s-9q5c9hjyg6-westwood~ranchoparkstation
+  TransitZone zone("Westwood / Rancho Park", &routeTable, &stopTable, 34.036565, -118.424929, 100); // s-9q5c9hjyg6-westwood~ranchoparkstation
   // TransitZone zone("Westwood / Weyburn", &routeTable, &stopTable, 34.062591, -118.445390, 100); // s-9q5cb8yteq-westwood~weyburn
   // TransitZone zone("Embarcadero", &routeTable, &stopTable, 37.7928486,-122.3968361, 100); // s-9q8yyzcnrh-embarcadero
-  TransitZone zone("Union Station", &routeTable, &stopTable, 34.055244, -118.233776, 200);
+  // TransitZone zone("Union Station", &routeTable, &stopTable, 34.055244, -118.233776, 200);
   zone.setWhiteList(&testFilter);
   // zone.init();
   // zone.updateDepartures(retrieveCurTime());
