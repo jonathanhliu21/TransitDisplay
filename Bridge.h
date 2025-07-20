@@ -38,6 +38,7 @@ private:
   int getDelayColor(int delay, bool isRealTime) const;
 
   void modifyRoutes();
+  Departure modifyDeparture(const Departure &dep);
   String truncateStop(const String &stopName, const bool truncateDowntown) const;
   String truncateRoute(const String &routeName) const;
   void sortRoutes(std::vector<Route *> &routes) const;

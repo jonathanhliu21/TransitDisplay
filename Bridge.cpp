@@ -55,6 +55,8 @@ void Bridge::retrieveDepartures() {
     
     // Serial.println(timeDelay);
     
+    dep = modifyDeparture(dep);
+    
     BridgeDeparture bridgeDep;
     bridgeDep.direction = truncateStop(dep.direction, true);
     bridgeDep.routeColor = dep.route->lineColor;
@@ -174,14 +176,29 @@ void Bridge::modifyRoutes() {
     Route &route = m_routes[i];
     if (route.agencyId == METRO_LOS_ANGELES) {
       if (route.lineColor == 0 && route.textColor == 0xffffff) {
-        route.lineColor = 0xC54858;
+        route.lineColor = LA_METRO_RAPID_COLOR;
       }
       if (route.lineColor == 0 && route.textColor == 0) {
-        route.lineColor = 0xfa7343;
-        route.textColor = 0xffffff;
+        route.lineColor = LA_METRO_LOCAL_COLOR;
+        route.textColor = COLOR_WHITE;
       }
     }
   }
+}
+
+Departure Bridge::modifyDeparture(const Departure &dep) {
+  Departure res = dep;
+  if (res.agency_id == METRO_LOS_ANGELES) {
+    if (res.route->lineColor == 0 && res.route->textColor == 0xffffff) {
+      res.route->lineColor = LA_METRO_RAPID_COLOR;
+    }
+    if (res.route->lineColor == 0 && res.route->textColor == 0) {
+      res.route->lineColor = LA_METRO_LOCAL_COLOR;
+      res.route->textColor = COLOR_WHITE;
+    }
+  }
+
+  return res;
 }
 
 // The function that performs the truncation based on the specified rules.
@@ -219,7 +236,7 @@ String Bridge::truncateStop(const String &name, const bool truncateDowntown) con
 
     // Heuristic B: Check if it looks like a long headsign (e.g., "... Downtown ... Station")
     // This is a fallback for non-numeric service names like "Metro E Line - ..."
-    if (!shouldTruncate && (result.indexOf("Downtown") != -1 || result.indexOf("Station") != -1)) {
+    if (!shouldTruncate && (result.indexOf("Downtown") != -1 || result.indexOf("Station") != -1) && !result.endsWith("Downtown")) {
       shouldTruncate = true;
     }
 
