@@ -161,6 +161,7 @@ bool Stop::callDeparturesAPI() {
     filter_stops_0_departures_0_trip["schedule_relationship"] = true;
     filter_stops_0_departures_0_trip["trip_headsign"] = true;
     filter_stops_0_departures_0_trip["route"]["onestop_id"] = true;
+    filter_stops_0_departures_0_trip["route"]["agency"]["onestop_id"] = true;
     // filter_stops_0["parent"]["stop_id"] = true;
 
     JsonDocument responseDoc;
@@ -277,7 +278,8 @@ bool Stop::callDeparturesAPI() {
         String onestopId = departureDoc["trip"]["route"]["onestop_id"].as<String>();
         if (m_routeTable->getRoute(onestopId) == nullptr) continue;
         departure.route = m_routeTable->getRoute(onestopId);
-        departure.agency_id = onestopId;
+        if (departureDoc["trip"]["route"]["agency"].isNull() || departureDoc["trip"]["route"]["agency"]["onestop_id"].isNull()) continue;
+        departure.agency_id = departureDoc["trip"]["route"]["agency"]["onestop_id"].as<String>();
 
         // Serial.println("here 7");
 
