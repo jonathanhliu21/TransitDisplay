@@ -7,8 +7,35 @@
 #include "TransitZone.h"
 #include "constants.h"
 
+Bridge::Bridge() {
+  // Initialize the mutex. 
+  m_departures_mutex = new std::mutex();
+}
 
-void Bridge::setZone(TransitZone *zone) {
+Bridge::~Bridge() {
+  // Clean up the dynamically allocated mutex
+  delete m_departures_mutex;
+  // Ensure the task is stopped and deleted if the object is destroyed.
+  stop();
+}
+
+void Bridge::setZone(TransitZone *zone, time_t startTimeMillis, time_t startTimeUTC) {
+  // stop any thread and kill mutexes (very disgraceful)
+  // gemini does not approve of this
+  stop();
+  delete m_departures_mutex;
+  m_departures_mutex = new std::mutex();
+  m_departures.clear();
+
+  // set time sync
+  m_startTimeS = startTimeMillis / 1000;
+  m_startTimeUTC = startTimeUTC;
+
+  // Prevent creating multiple tasks if begin() is called more than once.
+  if (m_retrieval_thread_handle != NULL) {
+      return;
+  }
+
   m_zone = zone;
   m_zone->init();
   m_name = m_zone->getName();
@@ -21,11 +48,17 @@ void Bridge::setZone(TransitZone *zone) {
   }
 
   modifyRoutes();
-}
+  retrieveDepartures();
 
-void Bridge::setTimeSync(time_t startTimeMillis, time_t startTimeUTC) {
-  m_startTimeS = startTimeMillis / 1000;
-  m_startTimeUTC = startTimeUTC;
+  // start thread
+  xTaskCreate(
+    retrieval_task_runner,    // Function to implement the task
+    "DepartureRetrievalTask", // Name of the task
+    8192,                     // Stack size in words
+    this,                     // Task input parameter (pointer to this instance)
+    1,                        // Priority of the task
+    &m_retrieval_thread_handle // Task handle to keep track of created task
+  );
 }
 
 void Bridge::retrieveDepartures() {
@@ -35,8 +68,12 @@ void Bridge::retrieveDepartures() {
   std::vector<Departure> departures = m_zone->getDepartures();
   curTime = retrieveTime();
 
-  m_departures.clear();
+  // threading code
+  // The lock_guard ensures that the mutex is locked for the entire scope of this block.
+  // No other thread can access m_departures until this function finishes.
+  std::lock_guard<std::mutex> lock(*m_departures_mutex);
 
+  m_departures.clear();
   for (Departure dep : departures) {
     if (!dep.isValid) {
       continue;
@@ -96,6 +133,11 @@ void Bridge::debugPrintRoutes() const {
 }
 
 void Bridge::debugPrintDepartures() const {
+    // threading code
+  // The lock_guard ensures that the mutex is locked for the entire scope of this block.
+  // No other thread can access m_departures until this function finishes.
+  std::lock_guard<std::mutex> lock(*m_departures_mutex);
+
   Serial.println(F("--- Departures Info ---"));
   if (m_departures.size() == 0) {
     Serial.println("No departures found");
@@ -115,6 +157,14 @@ void Bridge::debugPrintDepartures() const {
     Serial.print("\t");
     Serial.println(dep.delayColor, HEX);
     Serial.println(F("------------------"));
+  }
+}
+
+void Bridge::stop() {
+  if (m_retrieval_thread_handle != NULL) {
+    vTaskDelete(m_retrieval_thread_handle);
+    m_retrieval_thread_handle = NULL; // Set handle to NULL to indicate task is stopped.
+    Serial.println("Departure retrieval task stopped.");
   }
 }
 
@@ -343,4 +393,39 @@ void Bridge::sortRoutes(std::vector<Route *> &routes) const {
     }
     return a->agencyId < b->agencyId;
   });
+}
+
+void Bridge::retrieval_loop() {
+  unsigned long last_retrieval_time = 0;
+  bool firstTime = true;
+  while (true) {
+    // Check if it's time to run the retrieval logic.
+    // Serial.print("millis: ");
+    // Serial.println(millis());
+    if (millis() - last_retrieval_time >= REFRESH_PERIOD || firstTime) {
+      // Serial.println("here");
+      // Update the time *before* calling the function. This handles the case
+      // where the function takes a long time to execute.
+      last_retrieval_time = millis();
+      firstTime = false;
+
+      // Serial.println("Retrieving...");
+      retrieveDepartures();
+      // debugPrintDepartures();
+
+      // After the function returns, the loop will continue and the next
+      // check will occur. If retrieveDepartures() took more than 60 seconds,
+      // the condition `millis() - last_retrieval_time >= RETRIEVAL_INTERVAL_MS`
+      // will immediately be true again on the next iteration.
+    }
+
+    // A small delay to prevent the loop from busy-waiting and starving other tasks.
+    // This yields control to the FreeRTOS scheduler. 10ms is a reasonable value.
+    vTaskDelay(pdMS_TO_TICKS(10));
+  }
+}
+
+void Bridge::retrieval_task_runner(void* pvParameters) {
+    Bridge* bridge_instance = static_cast<Bridge*>(pvParameters);
+    bridge_instance->retrieval_loop();
 }

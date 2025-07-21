@@ -2,7 +2,7 @@
 #define CONSTANTS_H
 
 #define NUM_ROUTES_STORED 10
-#define REFRESH_PERIOD 30000 // ms
+#define REFRESH_PERIOD 60000 // ms
 #define MAX_PAGES_PROCESSED 5
 #define NEXT_N_SECONDS 6000
 

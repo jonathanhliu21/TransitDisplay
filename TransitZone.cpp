@@ -112,6 +112,8 @@ void TransitZone::updateDepartures(std::time_t curTime) {
     }
   }
 
+  m_departures.clear();
+
   for (Stop *stop : m_stops) {
     bool res = stop->callDeparturesAPI();
     // Serial.print("Retrieving result: ");
