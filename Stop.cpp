@@ -2,6 +2,7 @@
 
 #include <cstdlib>
 #include <ctime>
+#include <cstring>
 #include <vector>
 #include <algorithm>
 #include <ArduinoJson.h>
@@ -116,7 +117,7 @@ void Stop::debugPrintStop() const {
   Serial.println(F("    ----------------------"));
 }
 
-bool Stop::callDeparturesAPI() {
+bool Stop::callDeparturesAPI(std::time_t curTime) {
   String endpoint = String(STOPS_ENDPOINT_PREFIX) + "/" + m_id + "/departures?api_key=" + SECRET_API_KEY + "&limit=" + m_numDepartures + "&next=" + NEXT_N_SECONDS;
   const char* keys[] = {"Transfer-Encoding"};
 
@@ -126,12 +127,20 @@ bool Stop::callDeparturesAPI() {
   while (endpoint != "" && loopCnt < MAX_PAGES_PROCESSED) {
     HTTPClient client;
     client.collectHeaders(keys, 1);
+    client.setTimeout(HTTP_TIMEOUT);
 
     // m_client->useHTTP10(true);
     // m_client->begin(TRANSIT_LAND_SERVER, 443, endpoint);
     client.begin(TRANSIT_LAND_SERVER, TRANSIT_LAND_PORT, endpoint, TRANSIT_LAND_ROOT_CERTIFICATE);
     // m_client->begin(*m_wifiClient, TRANSIT_LAND_SERVER, 443, endpoint, true);
-    client.GET();
+    int httpCode = client.GET();
+
+    if (httpCode != 200) {
+      Serial.print("Departure from " + m_name + " Http request failed with code: ");
+      Serial.println(httpCode);
+      client.end();
+      return false;
+    }
 
     // Serial.println(endpoint);
 
@@ -171,7 +180,7 @@ bool Stop::callDeparturesAPI() {
     DeserializationError error = deserializeJson(responseDoc, response, DeserializationOption::Filter(filter), DeserializationOption::NestingLimit(11));
 
     if (error) {
-      Serial.println("Deserialization for departures failed");
+      Serial.println("Deserialization for departures from " + m_name + " failed");
       Serial.println(error.c_str());
       client.end();
       return false;
@@ -186,6 +195,7 @@ bool Stop::callDeparturesAPI() {
       endpoint = "";
     } else {
       endpoint = responseDoc["meta"]["next"].as<String>();
+      endpoint = endpoint.substring(strlen(TRANSIT_LAND_HTTPS));
     }
 
     // find if routes exist
@@ -315,11 +325,17 @@ bool Stop::callDeparturesAPI() {
         strptime(timestamp.c_str(), "%Y-%m-%dT%H:%M:%SZ", &timeinfo);
         departure.timestamp = timegm_custom(&timeinfo);
 
+        // calculate dely if not available
         if (timestampScheduled != "" && timestampScheduled != "null") {
           std::tm timeinfo2;
           strptime(timestampScheduled.c_str(), "%Y-%m-%dT%H:%M:%SZ", &timeinfo2);
           time_t timestampScheduledT = timegm_custom(&timeinfo2);
           departure.delay = departure.timestamp - timestampScheduledT;
+        }
+
+        // don't include timestamps before curtime
+        if (departure.timestamp < curTime - DELAY_CUTOFF) {
+          continue;
         }
 
         // Serial.println("here 8");

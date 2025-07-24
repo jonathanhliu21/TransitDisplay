@@ -22,7 +22,7 @@ class Stop {
 public:
   Stop(const String &oneStopId, const String &name, const String &feedId, const int &numDepartures, RouteTable *routeTable);
 
-  bool callDeparturesAPI();
+  bool callDeparturesAPI(std::time_t curTime);
 
   String getId() const;
   int getNumDepartures() const;

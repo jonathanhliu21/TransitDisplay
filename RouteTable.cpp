@@ -1,6 +1,7 @@
 #include "RouteTable.h"
 
 #include <vector>
+#include <cstring>
 #include <algorithm>
 #include <ArduinoJson.h>
 #include <HTTPClient.h>
@@ -30,11 +31,26 @@ std::vector<Route*> RouteTable::retrieveRoutes(float lat, float lon, float radiu
     // Serial.print("endpoint: ");
     // Serial.println(endpoint);
     client.collectHeaders(keys, 1);
+    client.setTimeout(HTTP_TIMEOUT);
+
+
+    // Serial.print("loop cnt: ");
+    // Serial.print(loopCnt);
+    // Serial.print(" endpoint: ");
+    // Serial.println(endpoint);
 
     // m_client->begin(TRANSIT_LAND_SERVER, 443, endpoint);
     client.begin(TRANSIT_LAND_SERVER, TRANSIT_LAND_PORT, endpoint, TRANSIT_LAND_ROOT_CERTIFICATE);
     // m_client->begin(*m_wifiClient, TRANSIT_LAND_SERVER, 443, endpoint, true);
-    client.GET();
+    int httpCode = client.GET();
+
+
+    if (httpCode != 200) {
+      Serial.print("Routes Http request failed with code: ");
+      Serial.println(httpCode);
+      client.end();
+      return routes;
+    }
 
     // String responseStr = m_client->getString();
     // Serial.println(responseStr);
@@ -75,6 +91,7 @@ std::vector<Route*> RouteTable::retrieveRoutes(float lat, float lon, float radiu
       endpoint = "";
     } else {
       endpoint = responseDoc["meta"]["next"].as<String>();
+      endpoint = endpoint.substring(strlen(TRANSIT_LAND_HTTPS));
     }
 
     // find if routes exist

@@ -6,6 +6,7 @@
 
 #include <algorithm>
 #include <ctime>
+#include <cstring>
 #include <time.h>
 #include <vector>
 
@@ -115,7 +116,7 @@ void TransitZone::updateDepartures(std::time_t curTime) {
   m_departures.clear();
 
   for (Stop *stop : m_stops) {
-    bool res = stop->callDeparturesAPI();
+    bool res = stop->callDeparturesAPI(curTime);
     // Serial.print("Retrieving result: ");
     // Serial.println(res);
 
@@ -147,10 +148,19 @@ bool TransitZone::retrieveStops() {
     HTTPClient client;
     // Serial.print("endpoint: ");
     // Serial.println(endpoint);
+    
     client.collectHeaders(keys, 1);
+    client.setTimeout(HTTP_TIMEOUT);
 
     client.begin(TRANSIT_LAND_SERVER, TRANSIT_LAND_PORT, endpoint, TRANSIT_LAND_ROOT_CERTIFICATE);
-    client.GET();
+    int httpCode = client.GET();
+
+    if (httpCode != 200) {
+      Serial.print("Stop Http request failed with code: ");
+      Serial.println(httpCode);
+      client.end();
+      return false;
+    }
 
     // Get the raw and the decoded stream
     Stream& rawStream = client.getStream();
@@ -186,6 +196,7 @@ bool TransitZone::retrieveStops() {
       endpoint = "";
     } else {
       endpoint = responseDoc["meta"]["next"].as<String>();
+      endpoint = endpoint.substring(strlen(TRANSIT_LAND_HTTPS));
     }
 
     // extract first stop

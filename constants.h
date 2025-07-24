@@ -4,7 +4,8 @@
 #define NUM_ROUTES_STORED 10
 #define REFRESH_PERIOD 60000 // ms
 #define MAX_PAGES_PROCESSED 5
-#define NEXT_N_SECONDS 6000
+#define NEXT_N_SECONDS 6000 // 100 mins
+#define HTTP_TIMEOUT 10000 // ms
 
 #define LA_METRO_RAPID_COLOR 0xC54858
 #define LA_METRO_LOCAL_COLOR 0xfa7343
@@ -23,6 +24,7 @@
 
 // API calls
 #define TRANSIT_LAND_SERVER "api.transit.land"
+#define TRANSIT_LAND_HTTPS "https://transit.land"
 #define TRANSIT_LAND_PORT 443
 #define STOPS_ENDPOINT_PREFIX "/api/v2/rest/stops"
 #define ROUTES_ENDPOINT_PREFIX "/api/v2/rest/routes"

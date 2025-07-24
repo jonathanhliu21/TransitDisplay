@@ -58,7 +58,7 @@ void setup()
   time_t unixTime = retrieveCurTime();
   long long ms = millis();
 
-  // zone.setWhiteList(&testFilter);
+  zone.setWhiteList(&testFilter);
   // zone.init();
   // zone.updateDepartures(retrieveCurTime());
   // zone.debugPrint();
@@ -67,7 +67,7 @@ void setup()
   // bridge.retrieveDepartures();
 
   bridge.debugPrintRoutes();
-  // bridge.debugPrintDepartures();
+  bridge.debugPrintDepartures();
 
   // Stop wwrp("s-9q5cb8yteq-westwood~weyburn", "Westwood / Weyburn", "", NUM_ROUTES_STORED, &routeTable, &http);
   // wwrp.callDeparturesAPI();
@@ -86,6 +86,6 @@ void setup()
 void loop()
 {
   // put your main code here, to run repeatedly:
-  bridge.debugPrintDepartures();
-  delay(30000);
+  // bridge.debugPrintDepartures();
+  // delay(30000);
 }
