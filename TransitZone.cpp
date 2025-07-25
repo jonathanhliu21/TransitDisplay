@@ -148,6 +148,11 @@ bool TransitZone::retrieveStops() {
     HTTPClient client;
     // Serial.print("endpoint: ");
     // Serial.println(endpoint);
+
+    Serial.print("loop cnt: ");
+    Serial.print(loopCnt);
+    Serial.print(" endpoint: ");
+    Serial.println(endpoint);
     
     client.collectHeaders(keys, 1);
     client.setTimeout(HTTP_TIMEOUT);
@@ -157,8 +162,16 @@ bool TransitZone::retrieveStops() {
 
     if (httpCode != 200) {
       Serial.print("Stop Http request failed with code: ");
-      Serial.println(httpCode);
+      Serial.print(httpCode);
       client.end();
+
+      if (httpCode == -11) {
+        Serial.println(" (Timeout). Retrying...");
+        delay(RETRY_DELAY);
+        continue;
+      }
+
+      Serial.println();
       return false;
     }
 
@@ -256,6 +269,7 @@ bool TransitZone::retrieveStops() {
     }
     
     client.end();
+    delay(PING_DELAY);
     loopCnt++;
   }
 

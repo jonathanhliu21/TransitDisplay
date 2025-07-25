@@ -52,13 +52,13 @@ void setup()
   Serial.print("Connected to ");
   Serial.println(SECRET_SSID);
 
-  delay(3000);
+  // delay(3000);
 
   Serial.println("Pinging API...");
   time_t unixTime = retrieveCurTime();
   long long ms = millis();
 
-  zone.setWhiteList(&testFilter);
+  // zone.setWhiteList(&testFilter);
   // zone.init();
   // zone.updateDepartures(retrieveCurTime());
   // zone.debugPrint();

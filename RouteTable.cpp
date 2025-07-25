@@ -34,10 +34,10 @@ std::vector<Route*> RouteTable::retrieveRoutes(float lat, float lon, float radiu
     client.setTimeout(HTTP_TIMEOUT);
 
 
-    // Serial.print("loop cnt: ");
-    // Serial.print(loopCnt);
-    // Serial.print(" endpoint: ");
-    // Serial.println(endpoint);
+    Serial.print("loop cnt: ");
+    Serial.print(loopCnt);
+    Serial.print(" endpoint: ");
+    Serial.println(endpoint);
 
     // m_client->begin(TRANSIT_LAND_SERVER, 443, endpoint);
     client.begin(TRANSIT_LAND_SERVER, TRANSIT_LAND_PORT, endpoint, TRANSIT_LAND_ROOT_CERTIFICATE);
@@ -47,7 +47,15 @@ std::vector<Route*> RouteTable::retrieveRoutes(float lat, float lon, float radiu
 
     if (httpCode != 200) {
       Serial.print("Routes Http request failed with code: ");
-      Serial.println(httpCode);
+      Serial.print(httpCode);
+
+      if (httpCode == -11) {
+        Serial.println(" (Timeout). Retrying...");
+        delay(RETRY_DELAY);
+        continue;
+      } 
+
+      Serial.println();
       client.end();
       return routes;
     }
@@ -156,6 +164,7 @@ std::vector<Route*> RouteTable::retrieveRoutes(float lat, float lon, float radiu
     }
 
     client.end();
+    delay(PING_DELAY);
     loopCnt++;
   }
   // Serial.println("crash 5");

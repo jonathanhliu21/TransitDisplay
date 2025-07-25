@@ -137,8 +137,16 @@ bool Stop::callDeparturesAPI(std::time_t curTime) {
 
     if (httpCode != 200) {
       Serial.print("Departure from " + m_name + " Http request failed with code: ");
-      Serial.println(httpCode);
+      Serial.print(httpCode);
       client.end();
+
+      if (httpCode == -11) {
+        Serial.println(" (Timeout). Retrying...");
+        delay(RETRY_DELAY);
+        continue;
+      } 
+
+      Serial.println();
       return false;
     }
 
@@ -358,8 +366,8 @@ bool Stop::callDeparturesAPI(std::time_t curTime) {
     for (int i = numDeparturesProcessed; i < m_numDepartures; i++) {
       m_departures[i].isValid = false;
     }
-
     client.end();
+    delay(PING_DELAY);
   }
 
   return loopCnt > 0;
