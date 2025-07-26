@@ -4,26 +4,23 @@
 #include <Arduino.h>
 #include <vector>
 #include <mutex>
+#include <TFT_eSPI.h>
 
 #include "TransitZone.h"
 #include "RouteTable.h"
-
-struct BridgeDeparture {
-  String direction;
-  int mins;
-  String line;
-  int textColor;
-  int routeColor;
-  int delayColor;
-};
+#include "RouteDisplay.h"
+#include "DeparturesDisplay.h"
+#include "DisplayTypes.h"
 
 // Bridges the code between calling the API and updating the display
-class Bridge {
+class Bridge
+{
 public:
-  Bridge();
+  Bridge(TFT_eSPI *tft);
   ~Bridge();
   void setZone(TransitZone *zone, time_t startTimeMillis, time_t startTimeUTC);
   void retrieveDepartures();
+  void loop();
 
   void debugPrintRoutes() const;
   void debugPrintDepartures() const;
@@ -31,14 +28,21 @@ public:
   void stop();
 
 private:
+  TFT_eSPI *m_tft;
   TransitZone *m_zone;
+  unsigned long long m_lastTimeRoute, m_lastTimeDep;
+  bool m_firstTimeRoute, m_firstTimeDep;
+
+  RouteDisplay m_routeDisplay;
+  DeparturesDisplay m_depDisplay;
+
   String m_name;
   std::vector<Route> m_routes;
   std::vector<BridgeDeparture> m_departures;
   time_t m_startTimeS, m_startTimeUTC;
 
   // Mutex to protect access to the m_departures vector.
-  std::mutex* m_departures_mutex;
+  std::mutex *m_departures_mutex;
   // Handle for the FreeRTOS task.
   TaskHandle_t m_retrieval_thread_handle = NULL;
 

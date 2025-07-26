@@ -1,6 +1,7 @@
 #include <WiFi.h>
 #include <vector>
 #include <time.h>
+#include <TFT_eSPI.h>
 
 #include "RouteTable.h"
 #include "StopTable.h"
@@ -9,10 +10,13 @@
 #include "constants.h"
 #include "Stop.h"
 #include "Bridge.h"
+#include "Overpass_Regular12.h"
+#include "DisplayConstants.h"
 
+TFT_eSPI tft = TFT_eSPI();
 RouteTable routeTable;
 StopTable stopTable;
-Bridge bridge;
+Bridge bridge(&tft);
 
 // ----- TESTING ----
 std::vector<String> testFilter = {"o-9q5-metro~losangeles", "o-9qh-metrolinktrains", "o-9q9-bart", "o-9q8y-sfmta"};
@@ -36,6 +40,8 @@ void setup()
 {
   // put your setup code here, to run once:
   Serial.begin(115200);
+  tft.begin();
+  tft.setRotation(1); // Depending of the use-case.
 
   // connect to Wifi
   delay(100);
@@ -55,10 +61,17 @@ void setup()
   // delay(3000);
 
   Serial.println("Pinging API...");
+  tft.fillScreen(TFT_BLACK);
+  tft.loadFont(Overpass_Regular12); // Must match the .vlw file name
+  tft.setTextColor(TFT_WHITE);
+  tft.setTextDatum(MC_DATUM);
+  tft.drawString("Initializing...", DISPLAY_WIDTH / 2, DISPLAY_HEIGHT / 2);
+  tft.unloadFont();
+
   time_t unixTime = retrieveCurTime();
   long long ms = millis();
 
-  // zone.setWhiteList(&testFilter);
+  zone.setWhiteList(&testFilter);
   // zone.init();
   // zone.updateDepartures(retrieveCurTime());
   // zone.debugPrint();
@@ -66,8 +79,8 @@ void setup()
   bridge.setZone(&zone, ms, unixTime);
   // bridge.retrieveDepartures();
 
-  bridge.debugPrintRoutes();
-  bridge.debugPrintDepartures();
+  // bridge.debugPrintRoutes();
+  // bridge.debugPrintDepartures();
 
   // Stop wwrp("s-9q5cb8yteq-westwood~weyburn", "Westwood / Weyburn", "", NUM_ROUTES_STORED, &routeTable, &http);
   // wwrp.callDeparturesAPI();
@@ -86,6 +99,7 @@ void setup()
 void loop()
 {
   // put your main code here, to run repeatedly:
+  bridge.loop();
   // bridge.debugPrintDepartures();
   // delay(30000);
 }

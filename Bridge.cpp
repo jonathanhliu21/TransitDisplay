@@ -3,11 +3,13 @@
 #include <algorithm>
 #include <set>
 #include <vector>
+#include <TFT_eSPI.h>
 
+#include "Overpass_Regular16.h"
 #include "TransitZone.h"
 #include "constants.h"
 
-Bridge::Bridge() {
+Bridge::Bridge(TFT_eSPI *tft) : m_tft{tft}, m_routeDisplay(tft), m_depDisplay(tft), m_lastTimeRoute(0), m_lastTimeDep(0), m_firstTimeRoute(true), m_firstTimeDep(true) {
   // Initialize the mutex. 
   m_departures_mutex = new std::mutex();
 }
@@ -19,6 +21,7 @@ Bridge::~Bridge() {
   stop();
 }
 
+// called in main thread
 void Bridge::setZone(TransitZone *zone, time_t startTimeMillis, time_t startTimeUTC) {
   // stop any thread and kill mutexes (very disgraceful)
   // gemini does not approve of this
@@ -36,8 +39,9 @@ void Bridge::setZone(TransitZone *zone, time_t startTimeMillis, time_t startTime
       return;
   }
 
+  // get zone information
   m_zone = zone;
-  m_zone->init();
+  m_zone->init(); // retrieves routes from API
   m_name = m_zone->getName();
   
   std::vector<Route *> rts = m_zone->getRoutes();
@@ -48,7 +52,7 @@ void Bridge::setZone(TransitZone *zone, time_t startTimeMillis, time_t startTime
   }
 
   modifyRoutes();
-  retrieveDepartures();
+  retrieveDepartures(); // retrieves departures from API
 
   // start thread
   xTaskCreate(
@@ -59,8 +63,38 @@ void Bridge::setZone(TransitZone *zone, time_t startTimeMillis, time_t startTime
     1,                        // Priority of the task
     &m_retrieval_thread_handle // Task handle to keep track of created task
   );
+
+  // clear screen and set title
+  m_tft->fillScreen(TFT_BLACK);
+  m_tft->loadFont(Overpass_Regular16); // Must match the .vlw file name
+  m_tft->setTextSize(16);
+  m_tft->setTextColor(TFT_WHITE, TFT_BLACK);
+  m_tft->setTextDatum(TC_DATUM);
+  m_tft->drawString(m_name, 240, 19);
+  m_tft->unloadFont();
+
+  // set routes & departures
+  m_routeDisplay.setRoutes(m_routes);
+  m_depDisplay.setDepartures(m_departures);
 }
 
+// called in main thread
+void Bridge::loop() {
+  if (m_firstTimeRoute || millis() - m_lastTimeRoute >= ROUTE_CYCLE_TIME) {
+    m_firstTimeRoute = false;
+    m_lastTimeRoute = millis();
+    m_routeDisplay.cycle(); 
+  }
+
+  if (m_firstTimeDep || millis() - m_lastTimeDep >= DEP_CYCLE_TIME) {
+    m_firstTimeDep = false;
+    m_lastTimeDep = millis();
+    m_depDisplay.setDepartures(m_departures);
+    m_depDisplay.cycle();
+  }
+}
+
+// called in bg thread
 void Bridge::retrieveDepartures() {
   // Serial.print("Current time: ");
   time_t curTime = retrieveTime();
