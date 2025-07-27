@@ -12,18 +12,18 @@
 #include "Bridge.h"
 #include "Overpass_Regular12.h"
 #include "DisplayConstants.h"
+#include "UserConstants.h"
 
 TFT_eSPI tft = TFT_eSPI();
 RouteTable routeTable;
 StopTable stopTable;
 Bridge bridge(&tft);
 
-// ----- TESTING ----
-std::vector<String> testFilter = {"o-9q5-metro~losangeles", "o-9qh-metrolinktrains", "o-9q9-bart", "o-9q8y-sfmta"};
-// TransitZone zone("Westwood / Rancho Park", &routeTable, &stopTable, 34.036565, -118.424929, 100); // s-9q5c9hjyg6-westwood~ranchoparkstation
-// TransitZone zone("Westwood / Weyburn", &routeTable, &stopTable, 34.062591, -118.445390, 100); // s-9q5cb8yteq-westwood~weyburn
-// TransitZone zone("Embarcadero", &routeTable, &stopTable, 37.7928486,-122.3968361, 100); // s-9q8yyzcnrh-embarcadero
-TransitZone zone("Union Station", &routeTable, &stopTable, 34.055244, -118.233776, 200);
+// set globals from user constants
+#ifdef TRANSIT_USE_FILTER
+std::vector<String> testFilter = TRANSIT_FILTER;
+#endif
+TransitZone zone(TRANSIT_ZONE_NAME, &routeTable, &stopTable, TRANSIT_PIN_LAT, TRANSIT_PIN_LON, TRANSIT_PIN_RADIUS);
 
 time_t retrieveCurTime() {
   configTime(0, 0, TIME_URL);
@@ -58,8 +58,6 @@ void setup()
   Serial.print("Connected to ");
   Serial.println(SECRET_SSID);
 
-  // delay(3000);
-
   Serial.println("Pinging API...");
   tft.fillScreen(TFT_BLACK);
   tft.loadFont(Overpass_Regular12); // Must match the .vlw file name
@@ -71,28 +69,12 @@ void setup()
   time_t unixTime = retrieveCurTime();
   long long ms = millis();
 
+#ifdef TRANSIT_USE_FILTER
   zone.setWhiteList(&testFilter);
-  // zone.init();
-  // zone.updateDepartures(retrieveCurTime());
-  // zone.debugPrint();
+#endif
 
   bridge.setZone(&zone, ms, unixTime);
-  // bridge.retrieveDepartures();
 
-  // bridge.debugPrintRoutes();
-  // bridge.debugPrintDepartures();
-
-  // Stop wwrp("s-9q5cb8yteq-westwood~weyburn", "Westwood / Weyburn", "", NUM_ROUTES_STORED, &routeTable, &http);
-  // wwrp.callDeparturesAPI();
-  // wwrp.debugPrintStop();
-
-  // Serial.println("Valid Stop: " + String(westwoodRancho.getIsValidStop()));
-  // Serial.println("Stop Name: " + String(westwoodRancho.getName()));
-
-  // for (int i = 0; i < routes->size(); i++) {
-  //   Route *r = routes->at(i);
-  //   printRoute(r);
-  // }
   Serial.println("Finished");
 }
 
@@ -100,6 +82,4 @@ void loop()
 {
   // put your main code here, to run repeatedly:
   bridge.loop();
-  // bridge.debugPrintDepartures();
-  // delay(30000);
 }

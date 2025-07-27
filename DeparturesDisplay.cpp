@@ -46,7 +46,7 @@ void DeparturesDisplay::cycle() {
   m_tft->loadFont(Overpass_Regular12);
 
   // Serial.println(m_tft->textWidth("Yellow-N"));
-  if (m_departures.empty()) {
+  if (m_departures.empty() || m_departures[0].mins >= 100) {
     m_tft->setTextDatum(MC_DATUM);
     m_tft->setTextColor(TFT_WHITE);
 
