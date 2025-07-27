@@ -268,6 +268,19 @@ void Bridge::modifyRoutes() {
       }
     }
   }
+
+
+  // color buses
+  for (int i = 0; i < m_routes.size(); i++) {
+    Route &route = m_routes[i];
+    if (route.lineColor == 0 && route.textColor == 0xffffff) {
+      route.lineColor = LA_METRO_RAPID_COLOR;
+    }
+    if (route.lineColor == 0 && route.textColor == 0) {
+      route.lineColor = 0;
+      route.textColor = COLOR_WHITE;
+    }
+  }
 }
 
 Departure Bridge::modifyDeparture(const Departure &dep) {
