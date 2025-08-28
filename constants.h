@@ -1,6 +1,11 @@
 #ifndef CONSTANTS_H
 #define CONSTANTS_H
 
+#define ROUTE_PIN 33
+#define STOP_PIN 25
+#define DEP_PIN 26
+#define RATE_LIMIT_PIN 27
+
 #define NUM_ROUTES_STORED 10
 #define REFRESH_PERIOD 60000 // ms
 #define MAX_PAGES_PROCESSED 5

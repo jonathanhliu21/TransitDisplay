@@ -40,6 +40,17 @@ void setup()
 {
   // put your setup code here, to run once:
   Serial.begin(115200);
+
+  pinMode(ROUTE_PIN, OUTPUT);
+  pinMode(STOP_PIN, OUTPUT);
+  pinMode(DEP_PIN, OUTPUT);
+  pinMode(RATE_LIMIT_PIN, OUTPUT);
+
+  digitalWrite(ROUTE_PIN, LOW);
+  digitalWrite(STOP_PIN, LOW);
+  digitalWrite(DEP_PIN, LOW);
+  digitalWrite(RATE_LIMIT_PIN, LOW);
+
   tft.begin();
   tft.setRotation(1); // Depending of the use-case.
 

@@ -157,6 +157,8 @@ bool TransitZone::retrieveStops() {
     client.collectHeaders(keys, 1);
     client.setTimeout(HTTP_TIMEOUT);
 
+    digitalWrite(STOP_PIN, LOW);
+
     client.begin(TRANSIT_LAND_SERVER, TRANSIT_LAND_PORT, endpoint, TRANSIT_LAND_ROOT_CERTIFICATE);
     int httpCode = client.GET();
 
@@ -165,10 +167,16 @@ bool TransitZone::retrieveStops() {
       Serial.print(httpCode);
       client.end();
 
+      digitalWrite(STOP_PIN, HIGH);
+
       if (httpCode == -11) {
         Serial.println(" (Timeout). Retrying...");
         delay(RETRY_DELAY);
         continue;
+      }
+
+      if (httpCode == 429) {
+        digitalWrite(RATE_LIMIT_PIN, HIGH);
       }
 
       Serial.println();

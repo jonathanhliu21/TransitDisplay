@@ -128,6 +128,7 @@ bool Stop::callDeparturesAPI(std::time_t curTime) {
     HTTPClient client;
     client.collectHeaders(keys, 1);
     client.setTimeout(HTTP_TIMEOUT);
+    digitalWrite(DEP_PIN, LOW);
 
     // m_client->useHTTP10(true);
     // m_client->begin(TRANSIT_LAND_SERVER, 443, endpoint);
@@ -140,11 +141,17 @@ bool Stop::callDeparturesAPI(std::time_t curTime) {
       Serial.print(httpCode);
       client.end();
 
+      digitalWrite(DEP_PIN, HIGH);
+
       if (httpCode == -11) {
         Serial.println(" (Timeout). Retrying...");
         delay(RETRY_DELAY);
         continue;
-      } 
+      }
+
+      if (httpCode == 429) {
+        digitalWrite(RATE_LIMIT_PIN, HIGH);
+      }
 
       Serial.println();
       return false;

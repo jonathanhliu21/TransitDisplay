@@ -33,6 +33,8 @@ std::vector<Route*> RouteTable::retrieveRoutes(float lat, float lon, float radiu
     client.collectHeaders(keys, 1);
     client.setTimeout(HTTP_TIMEOUT);
 
+    digitalWrite(ROUTE_PIN, LOW);
+
 
     Serial.print("loop cnt: ");
     Serial.print(loopCnt);
@@ -48,6 +50,9 @@ std::vector<Route*> RouteTable::retrieveRoutes(float lat, float lon, float radiu
     if (httpCode != 200) {
       Serial.print("Routes Http request failed with code: ");
       Serial.print(httpCode);
+      client.end();
+
+      digitalWrite(ROUTE_PIN, HIGH);
 
       if (httpCode == -11) {
         Serial.println(" (Timeout). Retrying...");
@@ -55,8 +60,11 @@ std::vector<Route*> RouteTable::retrieveRoutes(float lat, float lon, float radiu
         continue;
       } 
 
+      if (httpCode == 429) {
+        digitalWrite(RATE_LIMIT_PIN, HIGH);
+      }
+
       Serial.println();
-      client.end();
       return routes;
     }
 
