@@ -21,6 +21,12 @@ Bridge::~Bridge() {
   stop();
 }
 
+void Bridge::syncTime(time_t startTimeMillis, time_t startTimeUTC) {
+  // set time sync
+  m_startTimeS = startTimeMillis / 1000;
+  m_startTimeUTC = startTimeUTC;
+}
+
 // called in main thread
 void Bridge::setZone(TransitZone *zone, time_t startTimeMillis, time_t startTimeUTC) {
   // stop any thread and kill mutexes (very disgraceful)
@@ -30,9 +36,7 @@ void Bridge::setZone(TransitZone *zone, time_t startTimeMillis, time_t startTime
   m_departures_mutex = new std::mutex();
   m_departures.clear();
 
-  // set time sync
-  m_startTimeS = startTimeMillis / 1000;
-  m_startTimeUTC = startTimeUTC;
+  syncTime(startTimeMillis, startTimeUTC);
 
   // Prevent creating multiple tasks if begin() is called more than once.
   if (m_retrieval_thread_handle != NULL) {
@@ -80,6 +84,10 @@ void Bridge::setZone(TransitZone *zone, time_t startTimeMillis, time_t startTime
 
 // called in main thread
 void Bridge::loop() {
+  // The lock_guard ensures that the mutex is locked for the entire scope of this block.
+  // No other thread can access m_departures until this function finishes.
+  std::lock_guard<std::mutex> lock(*m_departures_mutex);
+
   if (m_firstTimeRoute || millis() - m_lastTimeRoute >= ROUTE_CYCLE_TIME) {
     m_firstTimeRoute = false;
     m_lastTimeRoute = millis();

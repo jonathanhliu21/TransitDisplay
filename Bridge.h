@@ -19,6 +19,7 @@ public:
   Bridge(TFT_eSPI *tft);
   ~Bridge();
   void setZone(TransitZone *zone, time_t startTimeMillis, time_t startTimeUTC);
+  void syncTime(time_t startTimeMillis, time_t startTimeUTC);
   void retrieveDepartures();
   void loop();
 

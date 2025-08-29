@@ -10,9 +10,10 @@
 #define REFRESH_PERIOD 60000 // ms
 #define MAX_PAGES_PROCESSED 5
 #define NEXT_N_SECONDS 6000 // 100 mins
+#define SYNC_TIME_FREQ 60000 // ms
 
-#define ROUTE_CYCLE_TIME 3000
-#define DEP_CYCLE_TIME 60000
+#define ROUTE_CYCLE_TIME 3000 // ms
+#define DEP_CYCLE_TIME 10000 // ms
 
 #define HTTP_TIMEOUT 10000 // ms
 #define PING_DELAY 1000

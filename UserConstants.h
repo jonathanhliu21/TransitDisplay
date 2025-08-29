@@ -11,8 +11,8 @@
 #ifdef TRANSIT_USE_FILTER
 // put vector of strings of onestop IDs of transit land **operators**
 // Operators can be found here: https://www.transit.land/operators
-// Example below includes BART and MUNI in SF Bay Area and LA Metro and Metrolink in Greater LA
-#define TRANSIT_FILTER {"o-9q5-metro~losangeles", "o-9qh-metrolinktrains", "o-9q9-bart", "o-9q8y-sfmta"}
+// Example below includes LA Metro and Metrolink in Greater LA and BART and Caltrain in SF Bay Area
+#define TRANSIT_FILTER {"o-9q5-metro~losangeles", "o-9qh-metrolinktrains", "o-9q9-bart", "o-9q9-caltrain"}
 #endif
 
 // This program works by assigning a name (which is displayed at the top) and pinning a location + radius

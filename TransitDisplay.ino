@@ -18,6 +18,7 @@ TFT_eSPI tft = TFT_eSPI();
 RouteTable routeTable;
 StopTable stopTable;
 Bridge bridge(&tft);
+unsigned long lastSyncTime;
 
 // set globals from user constants
 #ifdef TRANSIT_USE_FILTER
@@ -79,6 +80,7 @@ void setup()
 
   time_t unixTime = retrieveCurTime();
   long long ms = millis();
+  lastSyncTime = ms;
 
 #ifdef TRANSIT_USE_FILTER
   zone.setWhiteList(&testFilter);
@@ -93,4 +95,10 @@ void loop()
 {
   // put your main code here, to run repeatedly:
   bridge.loop();
+  
+  unsigned long curMs = millis();
+  if (curMs - lastSyncTime > SYNC_TIME_FREQ) {
+    bridge.syncTime(curMs, retrieveCurTime());
+    lastSyncTime = curMs;
+  }
 }
