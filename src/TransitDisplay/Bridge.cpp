@@ -8,6 +8,7 @@
 #include "Overpass_Regular16.h"
 #include "TransitZone.h"
 #include "constants.h"
+#include "DisplayConstants.h"
 
 Bridge::Bridge(TFT_eSPI *tft) : m_tft{tft}, m_routeDisplay(tft), m_depDisplay(tft), m_lastTimeRoute(0), m_lastTimeDep(0), m_firstTimeRoute(true), m_firstTimeDep(true) {
   // Initialize the mutex. 
@@ -74,7 +75,7 @@ void Bridge::setZone(TransitZone *zone, time_t startTimeMillis, time_t startTime
   m_tft->setTextSize(16);
   m_tft->setTextColor(TFT_WHITE, TFT_BLACK);
   m_tft->setTextDatum(TC_DATUM);
-  m_tft->drawString(m_name, 240, 19);
+  m_tft->drawString(m_name, NAME_X, NAME_Y);
   m_tft->unloadFont();
 
   // set routes & departures

@@ -4,6 +4,10 @@
 #define DISPLAY_WIDTH 480
 #define DISPLAY_HEIGHT 320
 
+// Title Constants
+#define NAME_X 240
+#define NAME_Y 19
+
 // ROUTE CONSTANTS
 #define ROUTE_START_Y 55
 #define ROUTE_BUTTON_HEIGHT 30
