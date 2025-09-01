@@ -8,6 +8,17 @@
 #define NAME_X 240
 #define NAME_Y 19
 
+// Select screen constants
+#define COORD_DIGITS 4
+#define RAD_DIGITS 0
+#define COORDS_Y 52
+#define RADIUS_Y 77
+#define START_INSTRUCTION_X_OFFSET 50
+#define NEXT_INSTRUCTION_X_OFFSET 20
+#define SELECT_INSTRUCTION_Y 285
+#define FILTER_CURSOR_X 5
+#define FILTER_CURSOR_Y 110
+
 // ROUTE CONSTANTS
 #define ROUTE_START_Y 55
 #define ROUTE_BUTTON_HEIGHT 30

@@ -15,15 +15,20 @@
 #define TRANSIT_FILTER {"o-9q5-metro~losangeles", "o-9qh-metrolinktrains", "o-9q9-bart", "o-9q9-caltrain"}
 #endif
 
+// Create a list of names, latitudes, and longitudes, with corresponding coordinates
+// Each element should be in tuple form: {name: str, lat: float, lon: float, radius: float}
 // This program works by assigning a name (which is displayed at the top) and pinning a location + radius
 // The API scans for **all** routes and stops within the radius
 // and then retrieves departures for **all** stops in the radius.
 // This is why it is recommended to set a smaller radius (~50-100 meters).
-// Radius units are in meters
-// The example below scans a 100 meter radius around the Westwood/Weyburn stop in Westwood, Los Angeles, CA
-#define TRANSIT_ZONE_NAME "Westwood / Weyburn"
-#define TRANSIT_PIN_LAT 34.062591
-#define TRANSIT_PIN_LON -118.445390
-#define TRANSIT_PIN_RADIUS 100 // meters
+// Radius units are in **meters**
+  // Name               , Latitude , Longitude  , Radius (m)
+#define TRANSIT_ZONES { \
+  { "Westwood / Weyburn", 34.062591, -118.445390, 100 }, \
+  { "7th St / Metro Center", 34.0489, -118.2588, 100 }, \
+  { "Embarcadero", 37.7928, -122.3970, 100 }, \
+  { "Millbrae", 37.6002, -122.3867, 100 }, \
+  { "Mountain View", 37.3945, -122.0769, 100 } \
+}
 
 #endif

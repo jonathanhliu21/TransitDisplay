@@ -23,6 +23,10 @@ public:
   void retrieveDepartures();
   void loop();
 
+  void drawTitle();
+  void drawInitializing();
+  void drawAreYouSure();
+
   void debugPrintRoutes() const;
   void debugPrintDepartures() const;
 

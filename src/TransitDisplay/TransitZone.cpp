@@ -63,19 +63,27 @@ void debugPrintDepartures(const std::vector<Departure> &departures) {
 
 
 TransitZone::TransitZone(String name, RouteTable *routeTable, StopTable *stopTable, const float lat, const float lon, const float radius)
-  : m_name{name}, m_routeTable{routeTable}, m_stopTable{stopTable}, m_lat{lat}, m_lon{lon}, m_radius{radius}, m_isValidZone{false}, m_whiteList{nullptr}
+  : m_name{name}, m_routeTable{routeTable}, m_stopTable{stopTable}, m_lat{lat}, m_lon{lon}, m_radius{radius}, m_isValidZone{false}, m_initialized{false}, m_whiteList{nullptr}
   {}
 
 String TransitZone::getName() const { return m_name; }
 bool TransitZone::getIsValidZone() const { return m_isValidZone; }
+float TransitZone::getLat() const {return m_lat;}
+float TransitZone::getLon() const {return m_lon;}
+float TransitZone::getRadius() const {return m_radius;}
 std::vector<Route *> TransitZone::getRoutes() const { return m_routes; }
 std::vector<Departure> TransitZone::getDepartures() const { return m_departures; }
 
 void TransitZone::init() {
-  m_routes = m_routeTable->retrieveRoutes(m_lat, m_lon, m_radius, m_whiteList);
-  bool stopsValid = retrieveStops();
+  if (!m_initialized) {
+    m_initialized = true;
+    m_routes = m_routeTable->retrieveRoutes(m_lat, m_lon, m_radius, m_whiteList);
+    bool stopsValid = retrieveStops();
 
-  m_isValidZone = m_routes.size() > 0 && stopsValid;
+    m_isValidZone = m_routes.size() > 0 && stopsValid;
+  } else {
+    m_departures.clear();
+  }
 }
 
 void TransitZone::debugPrint() const {
@@ -129,6 +137,10 @@ void TransitZone::updateDepartures(std::time_t curTime) {
   }
 
   checkDepTimes(m_departures, curTime);
+}
+
+void TransitZone::clearDepartures() {
+  m_departures.clear();
 }
 
 bool TransitZone::retrieveStops() {

@@ -5,6 +5,7 @@
 #include <vector>
 #include <TFT_eSPI.h>
 
+#include "Overpass_Regular12.h"
 #include "Overpass_Regular16.h"
 #include "TransitZone.h"
 #include "constants.h"
@@ -30,6 +31,9 @@ void Bridge::syncTime(time_t startTimeMillis, time_t startTimeUTC) {
 
 // called in main thread
 void Bridge::setZone(TransitZone *zone, time_t startTimeMillis, time_t startTimeUTC) {
+  Serial.println("Initializing...");
+  drawInitializing();
+
   // stop any thread and kill mutexes (very disgraceful)
   // gemini does not approve of this
   stop();
@@ -69,18 +73,13 @@ void Bridge::setZone(TransitZone *zone, time_t startTimeMillis, time_t startTime
     &m_retrieval_thread_handle // Task handle to keep track of created task
   );
 
-  // clear screen and set title
-  m_tft->fillScreen(TFT_BLACK);
-  m_tft->loadFont(Overpass_Regular16); // Must match the .vlw file name
-  m_tft->setTextSize(16);
-  m_tft->setTextColor(TFT_WHITE, TFT_BLACK);
-  m_tft->setTextDatum(TC_DATUM);
-  m_tft->drawString(m_name, NAME_X, NAME_Y);
-  m_tft->unloadFont();
+  drawTitle();
 
   // set routes & departures
   m_routeDisplay.setRoutes(m_routes);
   m_depDisplay.setDepartures(m_departures);
+
+  Serial.println("Finished");
 }
 
 // called in main thread
@@ -146,6 +145,51 @@ void Bridge::retrieveDepartures() {
     bridgeDep.mins = (dep.timestamp - curTime) / 60;
     m_departures.push_back(bridgeDep);
   }
+}
+
+void Bridge::drawInitializing() {
+  m_tft->fillScreen(TFT_BLACK);
+  m_tft->loadFont(Overpass_Regular12); // Must match the .vlw file name
+  m_tft->setTextColor(TFT_WHITE);
+  m_tft->setTextDatum(MC_DATUM);
+  m_tft->drawString("Initializing...", DISPLAY_WIDTH / 2, DISPLAY_HEIGHT / 2);
+  m_tft->unloadFont();
+}
+
+
+void Bridge::drawAreYouSure() {
+  // draw the "are you sure?"
+  m_tft->fillScreen(TFT_BLACK);
+  m_tft->loadFont(Overpass_Regular12); // Must match the .vlw file name
+  m_tft->setTextSize(12);
+  m_tft->setTextColor(TFT_WHITE);
+  m_tft->setTextDatum(MC_DATUM);
+  m_tft->drawString("Go back to selection page?", DISPLAY_WIDTH / 2, DISPLAY_HEIGHT / 2);
+
+  // draw the controls
+  m_tft->setTextDatum(TC_DATUM);
+  m_tft->fillRect(0, SELECT_INSTRUCTION_Y, DISPLAY_WIDTH, DISPLAY_HEIGHT - SELECT_INSTRUCTION_Y, TFT_BLACK);
+  m_tft->setTextColor(TFT_WHITE);
+  m_tft->drawString("1 - Yes", DISPLAY_WIDTH / 2 - START_INSTRUCTION_X_OFFSET, SELECT_INSTRUCTION_Y);
+  m_tft->setTextDatum(TL_DATUM);
+  m_tft->setTextColor(TFT_DARKGREY);
+  m_tft->drawString("2 - No", DISPLAY_WIDTH / 2 + NEXT_INSTRUCTION_X_OFFSET, SELECT_INSTRUCTION_Y);
+  m_tft->unloadFont();
+}
+
+void Bridge::drawTitle() {
+   // clear screen and set title
+  m_tft->fillScreen(TFT_BLACK);
+  m_tft->loadFont(Overpass_Regular16); // Must match the .vlw file name
+  m_tft->setTextSize(16);
+  m_tft->setTextColor(TFT_WHITE, TFT_BLACK);
+  m_tft->setTextDatum(TC_DATUM);
+  m_tft->setTextWrap(false);
+  m_tft->drawString(m_name, NAME_X, NAME_Y);
+  m_tft->unloadFont();
+
+  m_firstTimeRoute = true;
+  m_firstTimeDep = true;
 }
 
 void Bridge::debugPrintRoutes() const {
@@ -304,6 +348,12 @@ Departure Bridge::modifyDeparture(const Departure &dep) {
     }
   }
 
+  if (res.agency_id == BAY_AREA_RAPID_TRANSIT) {
+    if (res.direction == "SFO / SF / Antioch") {
+      res.direction = "Antioch";
+    }
+  }
+
   return res;
 }
 
@@ -377,6 +427,7 @@ String Bridge::truncateStop(const String &name, const bool truncateDowntown) con
 
   // Perform a final trim to clean up any trailing space and return the result.
   result.trim();
+
   return result;
 }
 

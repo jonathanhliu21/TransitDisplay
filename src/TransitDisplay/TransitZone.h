@@ -18,6 +18,9 @@ public:
   void init();
 
   String getName() const;
+  float getLat() const;
+  float getLon() const;
+  float getRadius() const;
   bool getIsValidZone() const;
   std::vector<Route *> getRoutes() const;
   std::vector<Departure> getDepartures() const;
@@ -25,6 +28,7 @@ public:
   void setWhiteList(std::vector<String> *whiteList);
   void clearWhiteList();
   void updateDepartures(std::time_t curTime);
+  void clearDepartures();
 
   void debugPrint() const;
 private:
@@ -35,6 +39,7 @@ private:
   float m_radius;
 
   bool m_isValidZone;
+  bool m_initialized;
 
   std::vector<Route*> m_routes;
   std::vector<Stop*> m_stops;

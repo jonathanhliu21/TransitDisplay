@@ -6,6 +6,10 @@
 #define DEP_PIN 26
 #define RATE_LIMIT_PIN 27
 
+#define BUTTON_1_PIN 35
+#define BUTTON_2_PIN 34
+#define DEBOUNCE_DELAY 50 // ms
+
 #define NUM_ROUTES_STORED 10
 #define REFRESH_PERIOD 60000 // ms
 #define MAX_PAGES_PROCESSED 5
@@ -33,6 +37,7 @@
 #define SEVEN_DAYS 604800 // s
 
 #define METRO_LOS_ANGELES "o-9q5-metro~losangeles"
+#define BAY_AREA_RAPID_TRANSIT "o-9q9-bart"
 
 // API calls
 #define TRANSIT_LAND_SERVER "api.transit.land"
