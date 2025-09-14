@@ -118,7 +118,7 @@ void Stop::debugPrintStop() const {
 }
 
 bool Stop::callDeparturesAPI(std::time_t curTime) {
-  String endpoint = String(STOPS_ENDPOINT_PREFIX) + "/" + m_id + "/departures?api_key=" + SECRET_API_KEY + "&limit=" + m_numDepartures + "&next=" + NEXT_N_SECONDS;
+  String endpoint = String(STOPS_ENDPOINT_PREFIX) + "/" + m_id + "/departures?api_key=" + SECRET_API_KEY + "&limit=" + m_numDepartures + "&next=" + NEXT_N_SECONDS + "&include_alerts=true&use_service_window=false";
   const char* keys[] = {"Transfer-Encoding"};
 
   int loopCnt = 0;
@@ -192,7 +192,7 @@ bool Stop::callDeparturesAPI(std::time_t curTime) {
 
     // String response = m_client->getString();
     // Serial.println(response);
-    DeserializationError error = deserializeJson(responseDoc, response, DeserializationOption::Filter(filter), DeserializationOption::NestingLimit(11));
+    DeserializationError error = deserializeJson(responseDoc, response, DeserializationOption::Filter(filter), DeserializationOption::NestingLimit(20));
 
     if (error) {
       Serial.println("Deserialization for departures from " + m_name + " failed");
@@ -312,11 +312,13 @@ bool Stop::callDeparturesAPI(std::time_t curTime) {
         if (departureDoc["departure"].isNull()) continue;
         String timestamp;
         String timestampScheduled;
+        bool scheduledSetWithDelay = false;
         if (!departure.isRealTime) {
           // Serial.println("not real time");
           // Serial.println(departureDoc["departure"].size());
           if (departureDoc["departure"]["scheduled_utc"].isNull()) continue;
           timestamp = departureDoc["departure"]["scheduled_utc"].as<String>();
+          timestampScheduled = timestamp;
           departure.delay = 0;
         } else {
           // Serial.println("real time");
@@ -325,12 +327,17 @@ bool Stop::callDeparturesAPI(std::time_t curTime) {
             departure.isRealTime = false;
             if (departureDoc["departure"]["scheduled_utc"].isNull()) continue;
             timestamp = departureDoc["departure"]["scheduled_utc"].as<String>();
+            timestampScheduled = timestamp;
             departure.delay = 0;
           } else {
             if (departureDoc["departure"]["estimated_delay"].isNull()) {
               timestampScheduled = departureDoc["departure"]["scheduled_utc"].as<String>();
             } else {
               departure.delay = departureDoc["departure"]["estimated_delay"].as<int>();
+            }
+            if (!departureDoc["departure"]["scheduled_utc"].isNull()) {
+              timestampScheduled = departureDoc["departure"]["scheduled_utc"].as<String>();
+              scheduledSetWithDelay = true;
             }
             timestamp = departureDoc["departure"]["estimated_utc"].as<String>();
           }
@@ -340,18 +347,23 @@ bool Stop::callDeparturesAPI(std::time_t curTime) {
         strptime(timestamp.c_str(), "%Y-%m-%dT%H:%M:%SZ", &timeinfo);
         departure.timestamp = timegm_custom(&timeinfo);
 
-        // calculate dely if not available
+        // calculate delay if not available
         if (timestampScheduled != "" && timestampScheduled != "null") {
           std::tm timeinfo2;
           strptime(timestampScheduled.c_str(), "%Y-%m-%dT%H:%M:%SZ", &timeinfo2);
           time_t timestampScheduledT = timegm_custom(&timeinfo2);
-          departure.delay = departure.timestamp - timestampScheduledT;
+          departure.expected_timestamp = timestampScheduledT;
+          if (!scheduledSetWithDelay) departure.delay = departure.timestamp - timestampScheduledT;
+        } else {
+          departure.expected_timestamp = 0;
         }
 
         // don't include timestamps before curtime
         if (departure.timestamp < curTime - DELAY_CUTOFF) {
           continue;
         }
+
+        // Serial.println("Expected timestamp " + String(departure.expected_timestamp));
 
         // Serial.println("here 8");
 

@@ -250,11 +250,11 @@ void loop()
         state = State::ARE_YOU_SURE;
       }
       bridge.loop();
+
+      if (curMs - lastSyncTime > SYNC_TIME_FREQ) {
+        bridge.syncTime(curMs, retrieveCurTime());
+        lastSyncTime = curMs;
+      }
       break;
-  }  
-  
-  if (curMs - lastSyncTime > SYNC_TIME_FREQ) {
-    bridge.syncTime(curMs, retrieveCurTime());
-    lastSyncTime = curMs;
   }
 }

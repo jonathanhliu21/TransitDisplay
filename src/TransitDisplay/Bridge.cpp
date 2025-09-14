@@ -414,7 +414,7 @@ String Bridge::truncateStop(const String &name, const bool truncateDowntown) con
   result.trim();
 
   // --- Rule 3: Cut off "Station" at the end ---
-  if (result.endsWith("Station")) {
+  if (result.endsWith("Station") && !result.endsWith("Union Station")) {
     // Take the substring from the beginning up to where "Station" starts.
     result = result.substring(0, result.length() - String("Station").length());
   }

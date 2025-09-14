@@ -109,19 +109,19 @@ void TransitZone::clearWhiteList() {
 
 void TransitZone::updateDepartures(std::time_t curTime) {
   checkDepTimes(m_departures, curTime);
-
-  // clear departures before current time
-  while (m_departures.size() > 0) {
-    // Serial.print("departures size: ");
-    // Serial.println(m_departures.size());
-    if (curTime > m_departures.begin()->timestamp) {
-      m_departures.erase(m_departures.begin());
-    } else {
-      break;
+  
+  // don't include departures before current time
+  // and don't include departures with **scheduled** departures after current time
+  // as they will get retrieved on next API call
+  std::vector<Departure> newDepartures;
+  for (int i = 0; i < m_departures.size(); i++) {
+    if (curTime <= m_departures[i].timestamp && m_departures[i].expected_timestamp != 0 && m_departures[i].expected_timestamp < curTime) {
+      newDepartures.push_back(m_departures[i]);
     }
   }
+  m_departures = newDepartures;
 
-  m_departures.clear();
+  // m_departures.clear();
 
   for (Stop *stop : m_stops) {
     bool res = stop->callDeparturesAPI(curTime);

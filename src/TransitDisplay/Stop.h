@@ -12,6 +12,7 @@ struct Departure {
   Route *route;
   String direction;
   std::time_t timestamp;
+  std::time_t expected_timestamp;
   bool isRealTime;
   String agency_id;
   long long delay;
