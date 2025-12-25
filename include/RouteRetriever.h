@@ -2,7 +2,6 @@
 #define ROUTE_RETRIEVER_H
 
 #include <ArduinoJson.h>
-#include <vector>
 #include <string>
 
 #include "RouteList.h"

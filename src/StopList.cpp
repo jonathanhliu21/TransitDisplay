@@ -1,5 +1,6 @@
 #include "StopList.h"
 
+#include <Arduino.h>
 #include <string>
 #include "APICaller.h"
 
@@ -43,4 +44,26 @@ void StopList::addStop(const Stop &stop)
 void StopList::clear()
 {
   m_stops.clear();
+}
+
+void StopList::debugPrintAllStops() const
+{
+  Serial.println(F("--- Stop Info ---"));
+  if (m_stops.size() == 0)
+  {
+    Serial.println("No stops found");
+    return;
+  }
+
+  for (const auto &s : m_stops)
+  {
+    const auto &stop = s.second;
+    Serial.print(F("ID: "));
+    Serial.println(stop.onestopId.c_str());
+
+    Serial.print(F("Name: "));
+    Serial.println(stop.name.c_str());
+
+    Serial.println(F("------------------"));
+  }
 }

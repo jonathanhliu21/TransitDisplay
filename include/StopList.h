@@ -20,6 +20,8 @@ public:
   void addStop(const Stop &stop);
   void clear();
 
+  void debugPrintAllStops() const;
+
 private:
   std::unordered_map<std::string, Stop> m_stops;
 };
