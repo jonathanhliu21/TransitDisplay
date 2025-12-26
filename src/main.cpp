@@ -4,11 +4,13 @@
 #include "secrets.h"
 #include "APICaller.h"
 #include "RouteRetriever.h"
+#include "StopRetriever.h"
 
 const std::vector<std::string> whitelistV = {"o-9q9-bart", "o-9q9-caltrain"};
 Whitelist whitelist(whitelistV, false);
 APICaller apiCaller(Secrets::SECRET_API_KEY);
 RouteRetriever routeRetriever(&apiCaller, 37.6002, -122.3867, 100, whitelist);
+StopRetriever stopRetriever(&apiCaller, 37.6002, -122.3867, 100, whitelist);
 
 void connectToWifi()
 {
@@ -34,9 +36,9 @@ void setup()
 
   connectToWifi();
 
-  routeRetriever.retrieve();                     // call API
-  RouteList res = routeRetriever.getRouteList(); // get routelist object
-  res.debugPrintAllRoutes();                     // print
+  stopRetriever.retrieve();                   // call API
+  StopList res = stopRetriever.getStopList(); // get routelist object
+  res.debugPrintAllStops();                   // print
 }
 
 void loop()

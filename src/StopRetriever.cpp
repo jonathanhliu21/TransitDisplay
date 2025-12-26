@@ -103,6 +103,9 @@ std::string StopRetriever::constructEndpointString(
   res += "?lat=" + std::to_string(lat);
   res += "&lon=" + std::to_string(lon);
   res += "&radius=" + std::to_string(radius);
-  res += "&served_by_onestop_ids=" + whitelist.getWhiteListStr();
+  if (whitelist.isActive())
+  {
+    res += "&served_by_onestop_ids=" + whitelist.getWhiteListStr();
+  }
   return res;
 }

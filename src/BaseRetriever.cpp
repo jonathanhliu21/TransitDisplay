@@ -31,7 +31,9 @@ bool BaseRetriever::loopRequest(
     writePinIfExists(LOW);
 
     // fetch API
-    JsonDocument responseDoc = m_caller->call(curEndpoint, filter, nestingLimit);
+    // next page attaches API key, so don't attach if our loopCnt is > 0
+    bool attachApiKey = loopCnt == 0;
+    JsonDocument responseDoc = m_caller->call(curEndpoint, filter, nestingLimit, attachApiKey);
 
     // print error, if any, and fail
     if (responseDoc[Constants::API_CALLER_STATUS_KEY] != static_cast<int>(APICallerStatus::STATUS_OK))
@@ -56,6 +58,7 @@ bool BaseRetriever::loopRequest(
 
       Serial.println(("Endpoint failed: " + m_endpoint).c_str());
       serializeJson(responseDoc, Serial);
+      Serial.println();
       return false;
     }
 
