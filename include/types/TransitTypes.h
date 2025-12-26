@@ -22,12 +22,13 @@ struct Stop
 struct Departure
 {
   Route route;
+  Stop stop;
   std::string direction;
   time_t expectedTimestamp;
   time_t actualTimestamp;
   bool isRealTime;
   std::string agencyOnestopId;
-  long long delay;
+  int delay;
   bool isValid;
 };
 

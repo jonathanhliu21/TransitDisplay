@@ -19,7 +19,7 @@ RouteRetriever::RouteRetriever(APICaller *caller, float lat, float lon, float ra
     : BaseRetriever{
           caller,
           constructEndpointString(lat, lon, radius),
-          Constants::MAX_PAGES_PROCESSED, Constants::ROUTE_ERROR_PIN}
+          ROUTE_MAX_PAGES_PROCESSED, Constants::ROUTE_ERROR_PIN}
 {
 }
 
@@ -28,7 +28,7 @@ RouteRetriever::RouteRetriever(
     : BaseRetriever{
           caller,
           constructEndpointString(lat, lon, radius),
-          Constants::MAX_PAGES_PROCESSED, Constants::ROUTE_ERROR_PIN},
+          ROUTE_MAX_PAGES_PROCESSED, Constants::ROUTE_ERROR_PIN},
       m_whitelist{whiteList}
 {
 }

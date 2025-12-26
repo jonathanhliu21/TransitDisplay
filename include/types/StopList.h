@@ -16,6 +16,7 @@ public:
   Stop getStop(const std::string &onestopId) const;
   std::vector<Stop> getAllStops() const;
   bool empty() const;
+  int size() const;
 
   void addStop(const Stop &stop);
   void clear();

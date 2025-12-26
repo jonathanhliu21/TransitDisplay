@@ -35,6 +35,11 @@ bool StopList::empty() const
   return m_stops.empty();
 }
 
+int StopList::size() const
+{
+  return m_stops.size();
+}
+
 void StopList::addStop(const Stop &stop)
 {
   m_stops[stop.onestopId] = stop;

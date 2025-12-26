@@ -10,10 +10,10 @@ public:
 
   void sync();
   time_t getCurTime() const;
+  time_t timegmUTC(struct tm *timeinfo);
 
 private:
   time_t espRetrieveTime();
-  time_t timegmUTC(struct tm *timeinfo);
 
   time_t m_startTimeSeconds;
   time_t m_startTimeUTC;
