@@ -175,6 +175,8 @@ bool DepartureRetriever::retrieveHeadsign(JsonVariantConst &departureDoc, Depart
     headsign = departureDoc["trip"]["trip_headsign"].as<std::string>();
   }
   departure.direction = headsign;
+
+  return true;
 }
 
 bool DepartureRetriever::retrieveRoute(JsonVariantConst &departureDoc, Departure &departure)
