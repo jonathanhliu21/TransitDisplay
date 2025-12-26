@@ -1,22 +1,22 @@
-#ifndef ROUTE_RETRIEVER_H
-#define ROUTE_RETRIEVER_H
+#ifndef STOP_RETREIVER_H
+#define STOP_RETRIEVER_H
 
 #include <ArduinoJson.h>
 #include <string>
 
-#include "RouteList.h"
+#include "StopList.h"
 #include "APICaller.h"
 #include "BaseRetriever.h"
 #include "Whitelist.h"
 
-class RouteRetriever : public BaseRetriever
+class StopRetriever : public BaseRetriever
 {
 public:
-  RouteRetriever(APICaller *caller, float lat, float lon, float radius);
-  RouteRetriever(APICaller *caller, float lat, float lon, float radius, const Whitelist &whiteList);
+  StopRetriever(APICaller *caller, float lat, float lon, float radius);
+  StopRetriever(APICaller *caller, float lat, float lon, float radius, const Whitelist &whiteList);
 
   virtual bool retrieve() override;
-  RouteList getRouteList() const;
+  StopList getStopList() const;
 
   Whitelist getWhiteList() const;
   void setWhiteList(const Whitelist &whitelist);
@@ -25,11 +25,13 @@ protected:
   virtual void parseOneElement(JsonVariantConst &doc) override;
 
 private:
-  RouteList m_routeList;
+  float m_lat, m_lon, m_radius;
+  StopList m_stopList;
   Whitelist m_whitelist;
 
   JsonDocument constructFilter() const;
   std::string constructEndpointString(float lat, float lon, float radius) const;
+  std::string constructEndpointString(float lat, float lon, float radius, const Whitelist &wl) const;
 };
 
 #endif

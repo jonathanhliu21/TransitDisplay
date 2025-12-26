@@ -30,3 +30,17 @@ void Whitelist::removeItem(const std::string &item)
 void Whitelist::setActive(const bool active) { m_isActive = active; }
 
 bool Whitelist::isActive() const { return m_isActive; }
+
+std::string Whitelist::getWhiteListStr() const
+{
+  std::string res;
+  if (!isActive())
+    return res;
+
+  for (const auto &item : m_whitelist)
+  {
+    res += item + ",";
+  }
+
+  return res;
+}

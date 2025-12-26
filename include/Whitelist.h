@@ -19,6 +19,8 @@ public:
   bool inWhitelist(const std::string &item) const;
   bool isActive() const;
 
+  std::string getWhiteListStr() const;
+
 private:
   std::unordered_set<std::string> m_whitelist;
   bool m_isActive;

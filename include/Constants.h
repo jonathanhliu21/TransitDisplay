@@ -19,6 +19,8 @@ namespace Constants
   inline constexpr int RATE_LIMIT_PIN = 27;
 
   inline constexpr int MAX_PAGES_PROCESSED = 5;
+
+  inline constexpr const char *STOPS_ENDPOINT_PREFIX = "/api/v2/rest/stops";
 }
 
 #endif

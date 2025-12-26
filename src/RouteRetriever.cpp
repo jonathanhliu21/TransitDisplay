@@ -45,7 +45,7 @@ bool RouteRetriever::retrieve()
   return loopRequest(filter, ROUTE_KEY_NAME);
 }
 
-RouteList RouteRetriever::getRouteList()
+RouteList RouteRetriever::getRouteList() const
 {
   return m_routeList;
 }
@@ -112,5 +112,9 @@ JsonDocument RouteRetriever::constructFilter() const
 
 std::string RouteRetriever::constructEndpointString(float lat, float lon, float radius) const
 {
-  return std::string(ROUTES_ENDPOINT_PREFIX) + "?lat=" + std::to_string(lat) + "&lon=" + std::to_string(lon) + "&radius=" + std::to_string(radius);
+  std::string res = ROUTES_ENDPOINT_PREFIX;
+  res += "?lat=" + std::to_string(lat);
+  res += "&lon=" + std::to_string(lon);
+  res += "&radius=" + std::to_string(radius);
+  return res;
 }
