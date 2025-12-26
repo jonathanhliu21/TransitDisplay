@@ -4,10 +4,10 @@
 #include <ArduinoJson.h>
 #include <string>
 
-#include "RouteList.h"
-#include "APICaller.h"
-#include "BaseRetriever.h"
-#include "Whitelist.h"
+#include "backend/APICaller.h"
+#include "backend/BaseRetriever.h"
+#include "types/RouteList.h"
+#include "types/Whitelist.h"
 
 class RouteRetriever : public BaseRetriever
 {

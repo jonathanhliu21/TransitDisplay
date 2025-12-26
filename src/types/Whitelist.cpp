@@ -1,4 +1,4 @@
-#include "Whitelist.h"
+#include "types/Whitelist.h"
 
 #include <vector>
 #include <unordered_set>

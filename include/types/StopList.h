@@ -1,11 +1,11 @@
 #ifndef STOP_LIST_H
 #define STOP_LIST_H
 
+#include <vector>
 #include <string>
 #include <unordered_map>
-#include "APICaller.h"
-#include "TimeRetriever.h"
-#include "TransitTypes.h"
+
+#include "types/TransitTypes.h"
 
 class StopList
 {

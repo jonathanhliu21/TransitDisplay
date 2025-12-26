@@ -2,9 +2,9 @@
 #include <WiFi.h>
 
 #include "secrets.h"
-#include "APICaller.h"
-#include "RouteRetriever.h"
-#include "StopRetriever.h"
+#include "backend/APICaller.h"
+#include "backend/RouteRetriever.h"
+#include "backend/StopRetriever.h"
 
 const std::vector<std::string> whitelistV = {"o-9q9-bart", "o-9q9-caltrain"};
 Whitelist whitelist(whitelistV, false);

@@ -1,12 +1,12 @@
-#include "BaseRetriever.h"
-#include "RouteRetriever.h"
+#include "backend/BaseRetriever.h"
+#include "backend/RouteRetriever.h"
 
 #include <string>
 #include <ArduinoJson.h>
 
-#include "TransitTypes.h"
 #include "Constants.h"
-#include "Whitelist.h"
+#include "types/TransitTypes.h"
+#include "types/Whitelist.h"
 
 namespace
 {

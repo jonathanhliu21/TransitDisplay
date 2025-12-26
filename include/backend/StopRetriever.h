@@ -4,10 +4,10 @@
 #include <ArduinoJson.h>
 #include <string>
 
-#include "StopList.h"
-#include "APICaller.h"
-#include "BaseRetriever.h"
-#include "Whitelist.h"
+#include "types/StopList.h"
+#include "types/Whitelist.h"
+#include "backend/APICaller.h"
+#include "backend/BaseRetriever.h"
 
 class StopRetriever : public BaseRetriever
 {

@@ -1,8 +1,7 @@
-#include "StopList.h"
+#include "types/StopList.h"
 
 #include <Arduino.h>
 #include <string>
-#include "APICaller.h"
 
 StopList::StopList() {}
 

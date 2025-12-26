@@ -4,7 +4,7 @@
 #include <string>
 #include <unordered_map>
 
-#include "TransitTypes.h"
+#include "types/TransitTypes.h"
 
 class RouteList
 {
