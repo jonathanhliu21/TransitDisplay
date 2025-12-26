@@ -2,6 +2,7 @@
 #include "backend/RouteRetriever.h"
 
 #include <string>
+#include <cstring>
 #include <ArduinoJson.h>
 
 #include "Constants.h"
@@ -88,8 +89,8 @@ void RouteRetriever::parseOneElement(JsonVariantConst &routeDoc)
   // get route color
   std::string lineColorHex = routeDoc["route_color"].as<std::string>();
   std::string textColorHex = routeDoc["route_text_color"].as<std::string>();
-  route.lineColor = std::stoi(lineColorHex, nullptr, 16);
-  route.textColor = std::stoi(textColorHex, nullptr, 16);
+  route.lineColor = std::strtol(lineColorHex.c_str(), NULL, 16);
+  route.textColor = std::strtol(textColorHex.c_str(), NULL, 16);
 
   m_routeList.addRoute(route);
 }

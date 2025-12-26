@@ -38,7 +38,8 @@ private:
   int m_timestampCutoff;
 
   JsonDocument constructFilter() const;
-  std::string constructEndpointString(const Stop &stop);
+  std::string constructEndpointString(
+      const Stop &stop, const int departureLimit, const int nextNSeconds);
   void parseOneDeparture(JsonVariantConst &doc);
 
   bool retrieveIsRealTime(JsonVariantConst &doc, Departure &dep);

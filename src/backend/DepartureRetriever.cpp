@@ -25,7 +25,7 @@ DepartureRetriever::DepartureRetriever(APICaller *caller,
                                        const int timestampCutoff)
     : BaseRetriever{
           caller,
-          constructEndpointString(stop),
+          constructEndpointString(stop, departureLimit, nextNSeconds),
           DEPARTURES_MAX_PAGES_PROCESSED, Constants::DEPARTURE_ERROR_PIN},
       m_time{time}, m_stop{stop}, m_routeList{routeList}, m_departureLimit{departureLimit}, m_nextNSeconds{nextNSeconds}, m_timestampCutoff{timestampCutoff}
 {
@@ -101,12 +101,13 @@ JsonDocument DepartureRetriever::constructFilter() const
   return filter;
 }
 
-std::string DepartureRetriever::constructEndpointString(const Stop &stop)
+std::string DepartureRetriever::constructEndpointString(
+    const Stop &stop, const int departureLimit, const int nextNSeconds)
 {
   std::string res = Constants::STOPS_ENDPOINT_PREFIX;
-  res += "/" + m_stop.onestopId + "/departures";
-  res += "?limit=" + m_departureLimit;
-  res += "&next=" + m_nextNSeconds;
+  res += std::string("/") + stop.onestopId + "/departures";
+  res += std::string("?limit=") + std::to_string(departureLimit);
+  res += std::string("&next=") + std::to_string(nextNSeconds);
   res += "&include_alerts=true&use_service_window=false";
   return res;
 }
@@ -114,6 +115,7 @@ std::string DepartureRetriever::constructEndpointString(const Stop &stop)
 void DepartureRetriever::parseOneDeparture(JsonVariantConst &departureDoc)
 {
   Departure departure;
+  departure.stop = m_stop;
   departure.isValid = true;
 
   if (!retrieveIsRealTime(departureDoc, departure))
@@ -220,7 +222,9 @@ bool DepartureRetriever::retrieveTimestampDelay(JsonVariantConst &departureDoc, 
     // if not real time, set actual time to scheduled time
     departure.isRealTime = false;
     if (depInfo["scheduled_utc"].isNull())
+    {
       return false;
+    }
     timestampActualStr = timestampExpectedStr;
   }
   else
@@ -238,14 +242,14 @@ bool DepartureRetriever::retrieveTimestampDelay(JsonVariantConst &departureDoc, 
   }
 
   // convert times
-  time_t timestampActual = convertTime(timestampActualStr);
-  time_t timestampExpected = convertTime(timestampExpectedStr);
+  departure.actualTimestamp = convertTime(timestampActualStr);
+  departure.expectedTimestamp = convertTime(timestampExpectedStr);
 
   // manually calculate delay if not found in response
   // this means that timestamp expected string
   if (!delayKeyFound && timestampExpectedStr != "" && departure.isRealTime)
   {
-    departure.delay = static_cast<long long>(timestampActual) - static_cast<long long>(timestampExpected);
+    departure.delay = static_cast<long long>(departure.actualTimestamp) - static_cast<long long>(departure.expectedTimestamp);
   }
 
   time_t curTime = m_time->getCurTime();
