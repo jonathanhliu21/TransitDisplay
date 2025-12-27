@@ -37,6 +37,7 @@ DepartureList TransitZone::getDepartures() const
 {
   return m_departureListRetriever.getDepartureList();
 }
+Whitelist TransitZone::getWhitelist() const { return m_whitelist; }
 
 void TransitZone::init()
 {
@@ -80,6 +81,7 @@ void TransitZone::init(const Whitelist &whitelist)
   m_isValid = !m_routeList.empty();
 
   m_status = TransitZoneStatus::IDLE;
+  m_whitelist = whitelist;
 }
 
 void TransitZone::callDeparturesAPI()

@@ -42,6 +42,7 @@ public:
   RouteList getRoutes() const;
   DepartureList getDepartures() const;
   TransitZoneStatus getStatus() const;
+  Whitelist getWhitelist() const;
 
   void init();
   void init(const Whitelist &whitelist);
@@ -55,6 +56,7 @@ private:
   float m_lat, m_lon, m_radius;
   bool m_isValid;
   bool m_isInitialized;
+  Whitelist m_whitelist;
   std::atomic<TransitZoneStatus> m_status;
 
   APICaller *m_caller;

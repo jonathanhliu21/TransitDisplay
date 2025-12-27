@@ -7,7 +7,7 @@ namespace
   const int DEPARTURE_DISP_REFRESH_RATE = 10000; // ms
   const int ROUTE_DISP_REFRESH_RATE = 3000;      // ms
 
-  const int DEPARTURE_API_CALL_REFRESH_PERIOD = 60000; // ms
+  const int DEPARTURE_API_CALL_REFRESH_PERIOD = 30000; // ms
 
   const int ON_TIME_COLOR = 0x00FF00;
   const int DELAYED_COLOR = 0xFF0000;

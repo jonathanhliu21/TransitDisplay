@@ -4,13 +4,13 @@
 
 namespace
 {
-  const int START_INSTRUCTION_X_OFFSET = 50;
-  const int NEXT_INSTRUCTION_X_OFFSET = 20;
-  const int SELECT_INSTRUCTION_Y = 285;
+  const int START_INSTRUCTION_X_OFFSET = Constants::DISPLAY_START_INSTRUCTION_X_OFFSET;
+  const int NEXT_INSTRUCTION_X_OFFSET = Constants::DISPLAY_NEXT_INSTRUCTION_X_OFFSET;
+  const int SELECT_INSTRUCTION_Y = Constants::DISPLAY_SELECT_INSTRUCTION_Y;
 
   // for title
-  const int NAME_X = 240;
-  const int NAME_Y = 19;
+  const int NAME_X = Constants::DISPLAY_TITLE_X;
+  const int NAME_Y = Constants::DISPLAY_TITLE_Y;
 }
 
 TransitZoneDisplayer::TransitZoneDisplayer(const std::string &name,

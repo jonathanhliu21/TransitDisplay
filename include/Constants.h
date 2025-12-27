@@ -26,6 +26,12 @@ namespace Constants
   inline constexpr int DISPLAY_HEIGHT = 320; // px
 
   inline constexpr int DISPLAY_ROUTE_PADDING = 16; // px
+
+  inline constexpr int DISPLAY_TITLE_X = 240;
+  inline constexpr int DISPLAY_TITLE_Y = 19;
+  inline constexpr int DISPLAY_START_INSTRUCTION_X_OFFSET = 50;
+  inline constexpr int DISPLAY_NEXT_INSTRUCTION_X_OFFSET = 20;
+  inline constexpr int DISPLAY_SELECT_INSTRUCTION_Y = 285;
 }
 
 #endif
