@@ -8,7 +8,7 @@ class TimeRetriever
 public:
   TimeRetriever();
 
-  void sync();
+  bool sync();
   std::time_t getCurTime() const;
   static std::time_t timegmUTC(struct tm *timeinfo);
 

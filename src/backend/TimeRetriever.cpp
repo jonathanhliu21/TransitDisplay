@@ -11,10 +11,15 @@ namespace
 
 TimeRetriever::TimeRetriever() : m_startTimeSeconds{0}, m_startTimeUTC{0} {}
 
-void TimeRetriever::sync()
+bool TimeRetriever::sync()
 {
-  m_startTimeUTC = espRetrieveTime();
+  std::time_t espTime = espRetrieveTime();
+  if (espTime == -1)
+    return false;
+
+  m_startTimeUTC = espTime;
   m_startTimeSeconds = millis() / 1000.0;
+  return true;
 }
 
 std::time_t TimeRetriever::getCurTime() const
