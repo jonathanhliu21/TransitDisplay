@@ -86,7 +86,14 @@ void setup()
   connectToWifi();
 
   // sync time
-  timeRetriever->sync();
+  if (!timeRetriever->sync())
+  {
+    digitalWrite(Constants::ROUTE_ERROR_PIN, HIGH);
+    digitalWrite(Constants::STOP_ERROR_PIN, HIGH);
+    digitalWrite(Constants::DEPARTURE_ERROR_PIN, HIGH);
+    digitalWrite(Constants::RATE_LIMIT_PIN, HIGH);
+    return;
+  }
 
   // draw screen
   if (zones.empty())
@@ -101,6 +108,14 @@ void setup()
   {
     displayer->drawZone(zones[0], zones[1], whitelist);
   }
+}
+
+void drawSelectScreen()
+{
+  int nextZoneIdx = zoneIdx + 1;
+  if (nextZoneIdx >= zones.size())
+    nextZoneIdx = 0;
+  displayer->drawZone(zones[zoneIdx], zones[nextZoneIdx], whitelist);
 }
 
 void loop()
@@ -120,23 +135,45 @@ void loop()
     digitalWrite(Constants::STOP_ERROR_PIN, LOW);
     digitalWrite(Constants::DEPARTURE_ERROR_PIN, LOW);
     digitalWrite(Constants::RATE_LIMIT_PIN, LOW);
-    // if (button1Res)
-    // {
-    //   bridge.setZone(zones[curIndex], curMs, retrieveCurTime());
-    //   state = State::TRANSIT;
-    // }
-    if (button2Res && zones.size() > 1)
+    if (button1Res)
+    {
+      zoneManager = new ZoneManager(zones[zoneIdx], tft, timeRetriever, whitelist, config.getRegularFont(), config.getTitleFont());
+      state = State::TRANSIT;
+      zoneManager->init();
+    }
+    else if (button2Res && zones.size() > 1)
     {
       zoneIdx++;
       if (zoneIdx >= zones.size())
         zoneIdx = 0;
 
-      int nextZoneIdx = zoneIdx + 1;
-      if (nextZoneIdx >= zones.size())
-        nextZoneIdx = 0;
-      displayer->drawZone(zones[zoneIdx], zones[nextZoneIdx], whitelist);
+      drawSelectScreen();
     }
     break;
+  case State::ARE_YOU_SURE:
+    if (button1Res)
+    {
+      state = State::SELECT;
+      delete zoneManager;
+      drawSelectScreen();
+    }
+    if (button2Res)
+    {
+      zoneManager->cycleDisplay();
+      state = State::TRANSIT;
+    }
+    break;
+  case State::TRANSIT:
+    if (button1Res || button2Res)
+    {
+      zoneManager->drawAreYouSure();
+      state = State::ARE_YOU_SURE;
+    }
+    else
+    {
+      zoneManager->mainThreadLoop();
+    }
+    delay(10);
   default:
     break;
   }

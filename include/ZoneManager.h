@@ -31,12 +31,14 @@ public:
   void mainThreadLoop();
   void stop();
   void drawAreYouSure();
+  void cycleDisplay();
 
 private:
   TransitZone *m_zone;
   TimeRetriever *m_timeRetriever;
   Whitelist m_whitelist;
   TransitZoneDisplayer m_displayer; // shared variable!
+  std::time_t m_lastSyncedTime;
 
   std::mutex m_displayerMtx;
   TaskHandle_t m_retrieval_thread_handle = NULL;

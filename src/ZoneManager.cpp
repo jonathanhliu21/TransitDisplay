@@ -8,6 +8,7 @@ namespace
   const int ROUTE_DISP_REFRESH_RATE = 3000;      // ms
 
   const int DEPARTURE_API_CALL_REFRESH_PERIOD = 30000; // ms
+  const int TIME_SYNC_REFRESH_PERIOD = 300000;         // ms
 
   const int ON_TIME_COLOR = 0x00FF00;
   const int DELAYED_COLOR = 0xFF0000;
@@ -33,7 +34,8 @@ ZoneManager::ZoneManager(
           fontLarge,
           ROUTE_DISP_REFRESH_RATE,
           DEPARTURE_DISP_REFRESH_RATE,
-      }
+      },
+      m_lastSyncedTime{0}
 {
 }
 
@@ -51,6 +53,7 @@ void ZoneManager::init()
   }
 
   m_timeRetriever->sync(); // syncs time to NTP
+  m_lastSyncedTime = millis();
   m_displayer.drawInitializing();
 
   // if zone not initialized then get zone routes
@@ -112,6 +115,11 @@ void ZoneManager::drawAreYouSure()
   m_displayer.drawAreYouSure();
 }
 
+void ZoneManager::cycleDisplay()
+{
+  m_displayer.cycle();
+}
+
 void ZoneManager::retrievalTaskRunner(void *pvParameters)
 {
   ZoneManager *inst = static_cast<ZoneManager *>(pvParameters);
@@ -141,6 +149,12 @@ void ZoneManager::bgTaskLoop()
         Filter::modifyDeparture(displayDepartureList[i]);
       }
       m_displayer.setDepartures(displayDepartureList);
+    }
+
+    if (millis() - m_lastSyncedTime >= TIME_SYNC_REFRESH_PERIOD)
+    {
+      m_lastSyncedTime = millis();
+      m_timeRetriever->sync();
     }
 
     vTaskDelay(pdMS_TO_TICKS(10));

@@ -71,6 +71,8 @@ TimeRetriever *Configuration::getTimeRetriever() { return &m_timeRetriever; }
 APICaller *Configuration::getCaller() const { return m_caller; }
 TFT_eSPI *Configuration::getTFT() { return &m_tft; }
 ZoneListDisplayer *Configuration::getZoneListDisplayer() { return m_zoneListDisplayer; }
+const uint8_t *Configuration::getRegularFont() const { return m_regularFont; }
+const uint8_t *Configuration::getTitleFont() const { return m_titleFont; }
 
 const Whitelist Configuration::getWhitelist() const { return m_whitelist; }
 const std::string Configuration::getSSID() const { return m_ssid; }

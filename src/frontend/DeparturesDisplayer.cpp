@@ -181,7 +181,7 @@ void DeparturesDisplayer::updateDepartureMins()
   }
 
   // don't perfrom unnecessary copying if all minutes are positive
-  if (m_departures.front().mins >= 0)
+  if (m_departures.empty() || m_departures.front().mins >= 0)
     return;
 
   std::deque<DisplayDeparture> dq(m_departures.begin(), m_departures.end());
