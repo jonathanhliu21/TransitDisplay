@@ -20,14 +20,12 @@ DepartureRetriever::DepartureRetriever(APICaller *caller,
                                        TimeRetriever *time,
                                        const Stop &stop,
                                        const RouteList &routeList,
-                                       const int departureLimit,
-                                       const int nextNSeconds,
-                                       const int timestampCutoff)
+                                       const DepartureRetrieverConfig &config)
     : BaseRetriever{
           caller,
-          constructEndpointString(stop, departureLimit, nextNSeconds),
+          constructEndpointString(stop, config.departureLimit, config.nextNSeconds),
           DEPARTURES_MAX_PAGES_PROCESSED, Constants::DEPARTURE_ERROR_PIN},
-      m_time{time}, m_stop{stop}, m_routeList{routeList}, m_departureLimit{departureLimit}, m_nextNSeconds{nextNSeconds}, m_timestampCutoff{timestampCutoff}
+      m_time{time}, m_stop{stop}, m_routeList{routeList}, m_departureConfig{config}
 {
 }
 
@@ -39,7 +37,7 @@ bool DepartureRetriever::retrieve()
 
   // remove all before current time
   std::time_t curTime = m_time->getCurTime();
-  m_departures.removeAllBefore(curTime);
+  m_departures.removeAllBefore(curTime - m_departureConfig.timestampCutoff);
 
   return res;
 }
@@ -259,7 +257,7 @@ bool DepartureRetriever::retrieveTimestampDelay(JsonVariantConst &departureDoc, 
   }
 
   std::time_t curTime = m_time->getCurTime();
-  if (departure.actualTimestamp < curTime - m_timestampCutoff)
+  if (departure.actualTimestamp < curTime - m_departureConfig.timestampCutoff)
   {
     return false;
   }

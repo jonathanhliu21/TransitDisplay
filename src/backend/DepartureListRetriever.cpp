@@ -6,10 +6,8 @@
 
 DepartureListRetriever::DepartureListRetriever(APICaller *caller,
                                                TimeRetriever *time,
-                                               const int departureLimit,
-                                               const int nextNSeconds,
-                                               const int timestampCutoff)
-    : m_time{time}, m_caller{caller}, m_departureList{departureLimit}, m_departureLimit{departureLimit}, m_nextNSeconds{nextNSeconds}, m_timestampCutoff{timestampCutoff} {}
+                                               const DepartureRetrieverConfig &config)
+    : m_time{time}, m_caller{caller}, m_departureList{config.departureLimit}, m_config{config} {}
 
 void DepartureListRetriever::init(RouteList routeList, StopList stopList)
 {
@@ -22,7 +20,7 @@ void DepartureListRetriever::init(RouteList routeList, StopList stopList)
  */
 bool DepartureListRetriever::retrieve()
 {
-  m_departureList.clear();
+  clear();
 
   bool res = true;
   for (const Stop &stop : m_stops)
@@ -31,9 +29,7 @@ bool DepartureListRetriever::retrieve()
                                     m_time,
                                     stop,
                                     m_routeList,
-                                    m_departureLimit,
-                                    m_nextNSeconds,
-                                    m_timestampCutoff);
+                                    m_config);
 
     if (depRetriever.retrieve())
     {
@@ -49,7 +45,12 @@ bool DepartureListRetriever::retrieve()
   return res;
 }
 
-DepartureList DepartureListRetriever::getDepartureList()
+void DepartureListRetriever::clear()
+{
+  m_departureList.clear();
+}
+
+DepartureList DepartureListRetriever::getDepartureList() const
 {
   return m_departureList;
 }

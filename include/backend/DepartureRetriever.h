@@ -8,6 +8,13 @@
 #include "backend/APICaller.h"
 #include "backend/TimeRetriever.h"
 
+struct DepartureRetrieverConfig
+{
+  int departureLimit;
+  int nextNSeconds;
+  int timestampCutoff;
+};
+
 /**
  * Fetches departures from a SINGLE TransitLand stop
  */
@@ -18,9 +25,7 @@ public:
                      TimeRetriever *time,
                      const Stop &stop,
                      const RouteList &routeList,
-                     const int departureLimit,
-                     const int nextNSeconds,
-                     const int timestampCutoff);
+                     const DepartureRetrieverConfig &departureConfig);
 
   virtual bool retrieve() override;
   DepartureList getDepartureList() const;
@@ -33,9 +38,7 @@ private:
   Stop m_stop;
   RouteList m_routeList;
   DepartureList m_departures;
-  int m_departureLimit;
-  int m_nextNSeconds;
-  int m_timestampCutoff;
+  DepartureRetrieverConfig m_departureConfig;
 
   static JsonDocument constructFilter();
   static std::string constructEndpointString(

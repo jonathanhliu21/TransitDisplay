@@ -4,15 +4,16 @@
 #include "secrets.h"
 #include "backend/TimeRetriever.h"
 #include "backend/APICaller.h"
-#include "backend/RouteRetriever.h"
-#include "backend/StopRetriever.h"
-#include "backend/DepartureRetriever.h"
+#include "backend/TransitZone.h"
 
-const std::vector<std::string> whitelistV = {"o-9q9-bart", "o-9q9-caltrain"};
+const std::vector<std::string> whitelistV = {
+    "o-9q9-bart",
+    "o-9q9-caltrain", "o-9q5-metro~losangeles", "o-9q5c-bigbluebus", "o-dr5r-nyct"};
 TimeRetriever timeR;
-Whitelist whitelist(whitelistV, false);
+Whitelist whitelist(whitelistV);
 APICaller apiCaller(Secrets::SECRET_API_KEY);
-StopRetriever stopRetriever(&apiCaller, 37.6002, -122.3867, 100, whitelist);
+
+TransitZone zone{"WWRP", 34.03681632305407, -118.42457036391623, 100, &apiCaller, &timeR, {5, 6000, 60}};
 
 void connectToWifi()
 {
@@ -39,16 +40,9 @@ void setup()
   connectToWifi();
   timeR.sync();
 
-  RouteRetriever routeRetriever(&apiCaller, 37.79286775914171, -122.39696985281753, 100, whitelist);
-  Stop stop{"s-9q8yyzcnrh-embarcadero", "EmbarcarderoN"};
-
-  routeRetriever.retrieve();
-  RouteList rl = routeRetriever.getRouteList();
-
-  DepartureRetriever depRetriever(&apiCaller, &timeR, stop, rl, 5, 6000, 60);
-  depRetriever.retrieve();
-  DepartureList dl = depRetriever.getDepartureList();
-  dl.debugPrintAllDepartures();
+  zone.init(whitelist);
+  zone.callDeparturesAPI();
+  zone.debugPrint();
 }
 
 void loop()

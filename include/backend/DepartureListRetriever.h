@@ -7,6 +7,7 @@
 #include "types/DepartureList.h"
 #include "backend/APICaller.h"
 #include "backend/TimeRetriever.h"
+#include "backend/DepartureRetriever.h"
 
 /**
  * Fetches departures from MULTIPLE transitland stops for a SINGLE TransitZone
@@ -17,14 +18,13 @@ public:
   DepartureListRetriever(
       APICaller *caller,
       TimeRetriever *time,
-      const int departureLimit,
-      const int nextNSeconds,
-      const int timestampCutoff);
+      const DepartureRetrieverConfig &config);
 
   void init(RouteList routeList, StopList stopList);
+  void clear();
   bool retrieve();
 
-  DepartureList getDepartureList();
+  DepartureList getDepartureList() const;
 
 private:
   TimeRetriever *m_time;
@@ -33,9 +33,7 @@ private:
   std::vector<Stop> m_stops;
   RouteList m_routeList;
   DepartureList m_departureList;
-  int m_departureLimit;
-  int m_nextNSeconds;
-  int m_timestampCutoff;
+  DepartureRetrieverConfig m_config;
 };
 
 #endif
