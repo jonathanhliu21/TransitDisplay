@@ -35,7 +35,13 @@ bool DepartureRetriever::retrieve()
 {
   m_departures.clear();
   JsonDocument filter = constructFilter();
-  return loopRequest(filter, DEPARTURES_STOPS_KEY_NAME, DEPARTURES_NESTING_LIMIT);
+  bool res = loopRequest(filter, DEPARTURES_STOPS_KEY_NAME, DEPARTURES_NESTING_LIMIT);
+
+  // remove all before current time
+  std::time_t curTime = m_time->getCurTime();
+  m_departures.removeAllBefore(curTime);
+
+  return res;
 }
 
 DepartureList DepartureRetriever::getDepartureList() const

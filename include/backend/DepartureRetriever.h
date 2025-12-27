@@ -9,7 +9,7 @@
 #include "backend/TimeRetriever.h"
 
 /**
- * Fetches departures from a SINGLE stop
+ * Fetches departures from a SINGLE TransitLand stop
  */
 class DepartureRetriever : public BaseRetriever
 {
