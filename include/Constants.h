@@ -21,6 +21,11 @@ namespace Constants
   inline constexpr int MAX_PAGES_PROCESSED = 5;
 
   inline constexpr const char *STOPS_ENDPOINT_PREFIX = "/api/v2/rest/stops";
+
+  inline constexpr int DISPLAY_WIDTH = 480;  // px
+  inline constexpr int DISPLAY_HEIGHT = 320; // px
+
+  inline constexpr int DISPLAY_ROUTE_PADDING = 16; // px
 }
 
 #endif
