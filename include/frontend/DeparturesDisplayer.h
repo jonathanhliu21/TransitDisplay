@@ -14,7 +14,7 @@ public:
   DeparturesDisplayer(TFT_eSPI *tft, const uint8_t *fontRegular);
 
   void drawBlankDepartureSpace();
-  void setDepartures(std::vector<DisplayDeparture> departures);
+  void setDepartures(const std::vector<DisplayDeparture> &departures);
 
   void cycle();
 

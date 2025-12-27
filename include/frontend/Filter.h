@@ -8,8 +8,8 @@
 class Filter
 {
 public:
-  static void modifyRoutes(std::vector<DisplayRoute> &routes);
-  static void modifyDeparture(DisplayDeparture &dep, const std::string &agencyOnestopId);
+  static std::vector<DisplayRoute> modifyRoutes(const std::vector<DisplayRoute> &routes);
+  static void modifyDeparture(DisplayDeparture &dep);
 
 private:
   static std::string truncateStop(const std::string &name, const bool truncateDowntown);

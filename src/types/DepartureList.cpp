@@ -32,6 +32,32 @@ std::vector<Departure> DepartureList::getDepartures() const
   return res;
 }
 
+std::vector<DisplayDeparture> DepartureList::getDisplayDepartureList(
+    const std::time_t curTime,
+    const int onTimeColor,
+    const int delayedColor,
+    const int earlyColor,
+    const int noRtInfoColor,
+    const int delayCutoff) const
+{
+  std::vector<DisplayDeparture> res;
+  for (const auto &dep : m_departures)
+  {
+    DisplayDeparture dd;
+    dd.delayColor = getDelayColor(dep.second.delay, dep.second.isRealTime,
+                                  onTimeColor, delayedColor, earlyColor, noRtInfoColor, delayCutoff);
+    dd.direction = dep.second.direction;
+    dd.line = dep.second.route.name;
+    dd.mins = (dep.second.actualTimestamp - curTime) / 60;
+    dd.routeColor = dep.second.route.lineColor;
+    dd.textColor = dep.second.route.textColor;
+    dd.agencyOnestopId = dep.second.agencyOnestopId;
+    res.push_back(dd);
+  }
+
+  return res;
+}
+
 void DepartureList::addDeparture(const Departure &departure)
 {
   m_departures.insert({departure.actualTimestamp, departure});
@@ -102,4 +128,22 @@ void DepartureList::debugPrintAllDepartures() const
     Serial.println(dep.isValid ? "Yes" : "No");
   }
   Serial.println(F("    ----------------------"));
+}
+
+int DepartureList::getDelayColor(
+    int delay,
+    bool isRealTime,
+    int onTimeColor,
+    int delayedColor,
+    int earlyColor,
+    int noRtInfoColor,
+    int delayCutoff) const
+{
+  if (!isRealTime)
+    return noRtInfoColor;
+  if (delay > delayCutoff)
+    return delayedColor;
+  if (delay < -delayCutoff)
+    return earlyColor;
+  return onTimeColor;
 }

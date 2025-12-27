@@ -13,8 +13,10 @@ namespace
   const int COLOR_WHITE = 0xFFFFFF;
 }
 
-void Filter::modifyRoutes(std::vector<DisplayRoute> &routes)
+std::vector<DisplayRoute> Filter::modifyRoutes(const std::vector<DisplayRoute> &rts)
 {
+  std::vector<DisplayRoute> routes = rts;
+
   // first combine directions
   auto cmp = [](const DisplayRoute &a, const DisplayRoute &b)
   {
@@ -83,11 +85,13 @@ void Filter::modifyRoutes(std::vector<DisplayRoute> &routes)
       route.textColor = COLOR_WHITE;
     }
   }
+
+  return routes;
 }
 
-void Filter::modifyDeparture(DisplayDeparture &dep, const std::string &agencyOnestopId)
+void Filter::modifyDeparture(DisplayDeparture &dep)
 {
-  modifyAgentSpecific(dep, agencyOnestopId);
+  modifyAgentSpecific(dep, dep.agencyOnestopId);
 
   dep.direction = truncateStop(dep.direction, true);
   dep.line = truncateRoute(dep.line);

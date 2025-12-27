@@ -9,6 +9,7 @@ using DisplayRoute = Route;
 
 struct DisplayDeparture
 {
+  std::string agencyOnestopId;
   std::string direction;
   std::string line;
   int mins;

@@ -3,12 +3,14 @@
 #include <TFT_eSPI.h>
 
 #include "secrets.h"
+#include "types/Whitelist.h"
 #include "backend/TimeRetriever.h"
 #include "backend/APICaller.h"
 #include "backend/TransitZone.h"
 #include "frontend/TransitZoneDisplayer.h"
 #include "fonts/Overpass_Regular12.h"
 #include "fonts/Overpass_Regular16.h"
+#include "ZoneManager.h"
 
 const std::vector<std::string> whitelistV = {
     "o-9q9-bart",
@@ -26,6 +28,7 @@ TransitZoneDisplayer displayer{
     10000};
 
 TransitZone zone{"WWRP", 34.03681632305407, -118.42457036391623, 100, &apiCaller, &timeR, {5, 6000, 60}};
+ZoneManager *manager;
 
 void connectToWifi()
 {
@@ -54,48 +57,12 @@ void setup()
   connectToWifi();
   timeR.sync();
 
-  zone.init(whitelist);
-  zone.callDeparturesAPI();
-  zone.debugPrint();
-
-  std::vector<DisplayRoute> routes{
-      {"", "1X", 0xFFFFFF, 0, "a"},
-      {"", "1Xadskljfklasdfjlasdkfklasdjfkl", 0xFFFFFF, 0, "a"},
-      {"", "X", 0xFFFFFF, 0, "a"},
-      {"", "1", 0xFFFFFF, 0, "a"},
-      {"", "1Xdf", 0xFFFFFF, 0, "a"},
-      {"", "asdf", 0xFFFFFF, 0, "a"},
-      {"", "t", 0xFFFFFF, 0, "a"},
-      {"", "efasd", 0xFFFFFF, 0, "a"},
-      {"", "n", 0xFFFFFF, 0, "a"},
-      {"", "a", 0xFFFFFF, 0, "a"},
-      {"", "b", 0xFFFFFF, 0, "a"},
-      {"", "2", 0xFFFFFF, 0, "b"},
-  };
-
-  std::vector<DisplayDeparture> departures{
-      {"abc", "123", 50, 0, 0xFFFFFF, 0xFFFFFF},
-      {"asdjklfasdjlfkalsfklasdfjklasdjklflasdfdklasfladsfjlj", "1Xadsklfadskl", 20, 0, 0xFFFFFF, 0xFFFFFF},
-      {"asdjklfasdjlfkalsfkl", "123", 30, 0, 0xFFFFFF, 0xFFFFFF},
-      {"a", "1Xadsklfadskl", 40, 0, 0xFFFFFF, 0xFFFFFF},
-      {"abc2", "123", 50, 0, 0xFFFFFF, 0xFFFFFF},
-      {"abc3", "123", 50, 0, 0xFFFFFF, 0xFFFFFF},
-      {"abc4", "123", 50, 0, 0xFFFFFF, 0xFFFFFF},
-      {"abc5", "123", 50, 0, 0xFFFFFF, 0xFFFFFF},
-      {"abc6", "123", 50, 0, 0xFFFFFF, 0xFFFFFF},
-  };
-
-  displayer.setRoutes(routes);
-  displayer.setDepartures(departures);
-
-  displayer.drawInitializing();
-  delay(1000);
-  displayer.drawAreYouSure();
-  delay(1000);
-  displayer.cycle();
+  manager = new ZoneManager(&zone, &tft, &timeR, whitelist, Overpass_Regular12, Overpass_Regular16);
+  manager->init();
 }
 
 void loop()
 {
-  displayer.loop();
+  manager->mainThreadLoop();
+  delay(10);
 }

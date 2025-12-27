@@ -2,6 +2,7 @@
 
 #include <string>
 #include <Arduino.h>
+#include <vector>
 
 bool RouteList::routeExists(const std::string &onestopId) const
 {
@@ -26,6 +27,16 @@ bool RouteList::empty() const
 int RouteList::size() const
 {
   return m_routes.size();
+}
+
+std::vector<DisplayRoute> RouteList::getDisplayRouteList() const
+{
+  std::vector<DisplayRoute> res;
+  for (const auto &r : m_routes)
+  {
+    res.push_back(r.second);
+  }
+  return res;
 }
 
 void RouteList::addRoute(const Route &route)

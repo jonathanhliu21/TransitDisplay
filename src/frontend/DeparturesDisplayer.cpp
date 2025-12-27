@@ -39,7 +39,7 @@ void DeparturesDisplayer::drawBlankDepartureSpace()
  * @brief Updates the list of departures to be displayed.
  * @param departures A vector of BridgeDeparture structs.
  */
-void DeparturesDisplayer::setDepartures(std::vector<DisplayDeparture> departures)
+void DeparturesDisplayer::setDepartures(const std::vector<DisplayDeparture> &departures)
 {
   m_departures = departures;
 }

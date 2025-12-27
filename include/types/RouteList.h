@@ -3,8 +3,10 @@
 
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 #include "types/TransitTypes.h"
+#include "types/DisplayTypes.h"
 
 class RouteList
 {
@@ -15,6 +17,7 @@ public:
   Route getRoute(const std::string &onestopId) const;
   bool empty() const;
   int size() const;
+  std::vector<DisplayRoute> getDisplayRouteList() const;
 
   void addRoute(const Route &route);
   void clear();
