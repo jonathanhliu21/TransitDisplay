@@ -75,7 +75,7 @@ void DepartureRetriever::parseOneElement(JsonVariantConst &stopInfo)
   }
 }
 
-JsonDocument DepartureRetriever::constructFilter() const
+JsonDocument DepartureRetriever::constructFilter()
 {
   JsonDocument filter;
   filter["meta"]["next"] = true;

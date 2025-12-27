@@ -74,7 +74,7 @@ void StopRetriever::parseOneElement(JsonVariantConst &stopInfo)
   m_stopList.addStop(stop);
 }
 
-JsonDocument StopRetriever::constructFilter() const
+JsonDocument StopRetriever::constructFilter()
 {
   // Create filter
   JsonDocument filter;
@@ -87,7 +87,7 @@ JsonDocument StopRetriever::constructFilter() const
   return filter;
 }
 
-std::string StopRetriever::constructEndpointString(float lat, float lon, float radius) const
+std::string StopRetriever::constructEndpointString(float lat, float lon, float radius)
 {
   std::string res = Constants::STOPS_ENDPOINT_PREFIX;
   res += "?lat=" + std::to_string(lat);
@@ -97,7 +97,7 @@ std::string StopRetriever::constructEndpointString(float lat, float lon, float r
 }
 
 std::string StopRetriever::constructEndpointString(
-    float lat, float lon, float radius, const Whitelist &whitelist) const
+    float lat, float lon, float radius, const Whitelist &whitelist)
 {
   std::string res = Constants::STOPS_ENDPOINT_PREFIX;
   res += "?lat=" + std::to_string(lat);

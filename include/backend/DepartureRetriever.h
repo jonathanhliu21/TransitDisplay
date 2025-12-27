@@ -37,8 +37,8 @@ private:
   int m_nextNSeconds;
   int m_timestampCutoff;
 
-  JsonDocument constructFilter() const;
-  std::string constructEndpointString(
+  static JsonDocument constructFilter();
+  static std::string constructEndpointString(
       const Stop &stop, const int departureLimit, const int nextNSeconds);
   void parseOneDeparture(JsonVariantConst &doc);
 

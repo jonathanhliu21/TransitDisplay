@@ -95,7 +95,7 @@ void RouteRetriever::parseOneElement(JsonVariantConst &routeDoc)
   m_routeList.addRoute(route);
 }
 
-JsonDocument RouteRetriever::constructFilter() const
+JsonDocument RouteRetriever::constructFilter()
 {
   JsonDocument filter;
   filter["meta"]["next"] = true;
@@ -111,7 +111,7 @@ JsonDocument RouteRetriever::constructFilter() const
   return filter;
 }
 
-std::string RouteRetriever::constructEndpointString(float lat, float lon, float radius) const
+std::string RouteRetriever::constructEndpointString(float lat, float lon, float radius)
 {
   std::string res = ROUTES_ENDPOINT_PREFIX;
   res += "?lat=" + std::to_string(lat);

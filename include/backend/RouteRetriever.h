@@ -28,8 +28,8 @@ private:
   RouteList m_routeList;
   Whitelist m_whitelist;
 
-  JsonDocument constructFilter() const;
-  std::string constructEndpointString(float lat, float lon, float radius) const;
+  static JsonDocument constructFilter();
+  static std::string constructEndpointString(float lat, float lon, float radius);
 };
 
 #endif

@@ -29,9 +29,9 @@ private:
   StopList m_stopList;
   Whitelist m_whitelist;
 
-  JsonDocument constructFilter() const;
-  std::string constructEndpointString(float lat, float lon, float radius) const;
-  std::string constructEndpointString(float lat, float lon, float radius, const Whitelist &wl) const;
+  static JsonDocument constructFilter();
+  static std::string constructEndpointString(float lat, float lon, float radius);
+  static std::string constructEndpointString(float lat, float lon, float radius, const Whitelist &wl);
 };
 
 #endif
