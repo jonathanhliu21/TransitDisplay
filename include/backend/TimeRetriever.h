@@ -1,7 +1,7 @@
 #ifndef TIME_RETRIEVER_H
 #define TIME_RETRIEVER_H
 
-#include <time.h>
+#include <ctime>
 
 class TimeRetriever
 {
@@ -9,14 +9,14 @@ public:
   TimeRetriever();
 
   void sync();
-  time_t getCurTime() const;
-  time_t timegmUTC(struct tm *timeinfo);
+  std::time_t getCurTime() const;
+  std::time_t timegmUTC(struct tm *timeinfo);
 
 private:
-  time_t espRetrieveTime();
+  std::time_t espRetrieveTime();
 
-  time_t m_startTimeSeconds;
-  time_t m_startTimeUTC;
+  std::time_t m_startTimeSeconds;
+  std::time_t m_startTimeUTC;
 };
 
 #endif

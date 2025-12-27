@@ -47,7 +47,7 @@ private:
   bool retrieveRoute(JsonVariantConst &doc, Departure &dep);
   bool retrieveTimestampDelay(JsonVariantConst &doc, Departure &dep);
 
-  time_t convertTime(const std::string &str);
+  std::time_t convertTime(const std::string &str);
 };
 
 #endif

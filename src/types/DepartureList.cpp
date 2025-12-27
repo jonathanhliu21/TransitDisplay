@@ -50,7 +50,7 @@ void DepartureList::concat(const DepartureList &other)
   }
 }
 
-void DepartureList::removeAllBefore(const time_t time)
+void DepartureList::removeAllBefore(const std::time_t time)
 {
   m_departures.erase(m_departures.begin(), m_departures.lower_bound(time));
 }

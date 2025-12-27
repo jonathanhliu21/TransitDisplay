@@ -1,7 +1,8 @@
 #include "backend/TimeRetriever.h"
 
 #include <Arduino.h>
-#include <time.h>
+#include <ctime>
+#include <cstdlib>
 
 namespace
 {
@@ -16,16 +17,16 @@ void TimeRetriever::sync()
   m_startTimeSeconds = millis() / 1000.0;
 }
 
-time_t TimeRetriever::getCurTime() const
+std::time_t TimeRetriever::getCurTime() const
 {
   // last UTC time recorded + time elapsed since last UTC time recorded
   return m_startTimeUTC + millis() / 1000.0 - m_startTimeSeconds;
 }
 
-time_t TimeRetriever::espRetrieveTime()
+std::time_t TimeRetriever::espRetrieveTime()
 {
   configTime(0, 0, TIME_URL);
-  struct tm timeinfo;
+  std::tm timeinfo;
   if (!getLocalTime(&timeinfo))
   {
     Serial.println("Cannot get local time");
@@ -35,9 +36,9 @@ time_t TimeRetriever::espRetrieveTime()
   return timegmUTC(&timeinfo);
 }
 
-time_t TimeRetriever::timegmUTC(struct tm *timeinfo)
+std::time_t TimeRetriever::timegmUTC(std::tm *timeinfo)
 {
-  time_t result;
+  std::time_t result;
 
   // 1. Save the current TZ environment variable
   char *tz_original = getenv("TZ");

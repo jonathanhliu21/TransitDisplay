@@ -3,7 +3,7 @@
 
 #include <vector>
 #include <map>
-#include <time.h>
+#include <ctime>
 #include "types/TransitTypes.h"
 
 class DepartureList
@@ -17,7 +17,7 @@ public:
 
   void addDeparture(const Departure &departure);
   void concat(const DepartureList &other);
-  void removeAllBefore(const time_t time);
+  void removeAllBefore(const std::time_t time);
   void shrinkTo(const int size);
   void clear();
 
@@ -25,7 +25,7 @@ public:
 
 private:
   int m_numStored;
-  std::multimap<time_t, Departure> m_departures;
+  std::multimap<std::time_t, Departure> m_departures;
 };
 
 #endif

@@ -2,7 +2,7 @@
 #define TRANSIT_TYPES_H
 
 #include <string>
-#include <time.h>
+#include <ctime>
 
 struct Route
 {
@@ -24,8 +24,8 @@ struct Departure
   Route route;
   Stop stop;
   std::string direction;
-  time_t expectedTimestamp;
-  time_t actualTimestamp;
+  std::time_t expectedTimestamp;
+  std::time_t actualTimestamp;
   bool isRealTime;
   std::string agencyOnestopId;
   int delay;

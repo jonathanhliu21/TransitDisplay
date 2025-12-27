@@ -1,7 +1,7 @@
 #include "backend/BaseRetriever.h"
 #include "backend/DepartureRetriever.h"
 
-#include <time.h>
+#include <ctime>
 #include <string>
 #include <ArduinoJson.h>
 
@@ -252,7 +252,7 @@ bool DepartureRetriever::retrieveTimestampDelay(JsonVariantConst &departureDoc, 
     departure.delay = static_cast<long long>(departure.actualTimestamp) - static_cast<long long>(departure.expectedTimestamp);
   }
 
-  time_t curTime = m_time->getCurTime();
+  std::time_t curTime = m_time->getCurTime();
   if (departure.actualTimestamp < curTime - m_timestampCutoff)
   {
     return false;
@@ -261,7 +261,7 @@ bool DepartureRetriever::retrieveTimestampDelay(JsonVariantConst &departureDoc, 
   return true;
 }
 
-time_t DepartureRetriever::convertTime(const std::string &str)
+std::time_t DepartureRetriever::convertTime(const std::string &str)
 {
   struct tm timeinfo;
   strptime(str.c_str(), "%Y-%m-%dT%H:%M:%SZ", &timeinfo);
