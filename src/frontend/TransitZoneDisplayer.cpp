@@ -7,6 +7,10 @@ namespace
   const int START_INSTRUCTION_X_OFFSET = 50;
   const int NEXT_INSTRUCTION_X_OFFSET = 20;
   const int SELECT_INSTRUCTION_Y = 285;
+
+  // for title
+  const int NAME_X = 240;
+  const int NAME_Y = 19;
 }
 
 TransitZoneDisplayer::TransitZoneDisplayer(const std::string &name,
@@ -85,6 +89,8 @@ void TransitZoneDisplayer::drawAreYouSure()
 
 void TransitZoneDisplayer::cycle()
 {
+  drawTitle();
+
   // capture timestamp of BEGINNING of cycle
   m_lastRouteRefresh = millis();
   m_routeDisplay.cycle();
@@ -105,9 +111,22 @@ void TransitZoneDisplayer::loop()
 
   // check departure display; BEGINNING of cycle
   curTime = millis();
-  if (curTime - m_lastDeparturesRefresh >= m_routeRefreshPeriod)
+  if (curTime - m_lastDeparturesRefresh >= m_departuresRefreshPeriod)
   {
-    m_routeDisplay.cycle();
-    m_lastRouteRefresh = curTime;
+    m_departuresDisplay.cycle();
+    m_lastDeparturesRefresh = curTime;
   }
+}
+
+void TransitZoneDisplayer::drawTitle()
+{
+  // clear screen and set title
+  m_tft->fillScreen(TFT_BLACK);
+  m_tft->loadFont(m_fontLarge); // Must match the .vlw file name
+  m_tft->setTextSize(16);
+  m_tft->setTextColor(TFT_WHITE, TFT_BLACK);
+  m_tft->setTextDatum(TC_DATUM);
+  m_tft->setTextWrap(false);
+  m_tft->drawString(m_name.c_str(), NAME_X, NAME_Y);
+  m_tft->unloadFont();
 }

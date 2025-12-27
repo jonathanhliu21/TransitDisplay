@@ -18,11 +18,11 @@ public:
                        TFT_eSPI *tft,
                        const uint8_t *fontRegular,
                        const uint8_t *fontLarge,
-                       int routeRefreshPeriod,
-                       int departuresRefreshPeriod);
+                       int routeRefreshPeriodMs,
+                       int departuresRefreshPeriodMs);
 
   void setRoutes(const std::vector<DisplayRoute> &displayRoutes);
-  void setDepartures(const std::vector<DisplayDeparture> &DisplayDeparture);
+  void setDepartures(const std::vector<DisplayDeparture> &displayDepartures);
   void drawInitializing();
   void drawAreYouSure();
 
@@ -39,6 +39,8 @@ private:
 
   RouteDisplayer m_routeDisplay;
   DeparturesDisplayer m_departuresDisplay;
+
+  void drawTitle();
 };
 
 #endif
