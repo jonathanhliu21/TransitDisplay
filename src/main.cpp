@@ -27,7 +27,7 @@ TransitZoneDisplayer displayer{
     5000,
     10000};
 
-TransitZone zone{"WWRP", 34.03681632305407, -118.42457036391623, 100, &apiCaller, &timeR, {5, 6000, 60}};
+TransitZone zone{"WWRP", 34.03681632305407, -118.42457036391623, 100, &apiCaller, &timeR, {7, 6000, 60}};
 ZoneManager *manager;
 
 void connectToWifi()

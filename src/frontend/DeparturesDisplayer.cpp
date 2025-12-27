@@ -2,6 +2,7 @@
 
 #include <Arduino.h>
 #include <vector>
+#include <deque>
 
 #include "types/DisplayTypes.h"
 #include "Constants.h"
@@ -23,7 +24,7 @@ namespace
 }
 
 DeparturesDisplayer::DeparturesDisplayer(TFT_eSPI *tft, const uint8_t *fontRegular)
-    : m_tft{tft}, m_fontRegular{fontRegular} {}
+    : m_tft{tft}, m_fontRegular{fontRegular}, m_lastUpdated{0} {}
 
 /**
  * @brief Clears the entire area where departures are drawn.
@@ -41,6 +42,7 @@ void DeparturesDisplayer::drawBlankDepartureSpace()
  */
 void DeparturesDisplayer::setDepartures(const std::vector<DisplayDeparture> &departures)
 {
+  m_lastUpdated = millis();
   m_departures = departures;
 }
 
@@ -55,6 +57,8 @@ void DeparturesDisplayer::cycle()
   // Load the custom font for drawing.
   // This must match the name of the .vlw file you created.
   m_tft->loadFont(m_fontRegular);
+
+  updateDepartureMins();
 
   // Serial.println(m_tft->textWidth("Yellow-N"));
   if (m_departures.empty() || m_departures[0].mins >= 100)
@@ -164,4 +168,23 @@ std::string DeparturesDisplayer::truncateText(const std::string &text, int maxWi
 
   // Fallback for very short max widths
   return "...";
+}
+
+/**
+ * Make it so the minutes until arr doesn't have to be updated on every API fetch
+ */
+void DeparturesDisplayer::updateDepartureMins()
+{
+  for (int i = 0; i < m_departures.size(); i++)
+  {
+    m_departures[i].mins -= (millis() - m_lastUpdated) / 60000;
+  }
+
+  std::deque<DisplayDeparture> dq(m_departures.begin(), m_departures.end());
+  while (!dq.empty() && dq.front().mins < 0)
+  {
+    dq.pop_front();
+  }
+
+  m_departures.assign(dq.begin(), dq.end());
 }

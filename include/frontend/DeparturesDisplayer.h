@@ -4,6 +4,7 @@
 #include <Arduino.h>
 #include <TFT_eSPI.h>
 #include <vector>
+#include <ctime>
 
 #include "types/DisplayTypes.h"
 #include "frontend/BaseDisplayer.h"
@@ -22,8 +23,10 @@ private:
   TFT_eSPI *m_tft;
   const uint8_t *m_fontRegular;
   std::vector<DisplayDeparture> m_departures;
+  std::time_t m_lastUpdated; // in relative time - millis(), ms
 
   std::string truncateText(const std::string &text, int maxWidth);
+  void updateDepartureMins();
 };
 
 #endif
