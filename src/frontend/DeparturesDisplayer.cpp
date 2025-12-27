@@ -180,6 +180,10 @@ void DeparturesDisplayer::updateDepartureMins()
     m_departures[i].mins -= (millis() - m_lastUpdated) / 60000;
   }
 
+  // don't perfrom unnecessary copying if all minutes are positive
+  if (m_departures.front().mins >= 0)
+    return;
+
   std::deque<DisplayDeparture> dq(m_departures.begin(), m_departures.end());
   while (!dq.empty() && dq.front().mins < 0)
   {
