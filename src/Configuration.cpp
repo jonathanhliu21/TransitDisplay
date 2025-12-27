@@ -4,6 +4,9 @@
 #include "UserConfig.h"
 #include "backend/DepartureRetriever.h"
 
+#include "fonts/Overpass_Regular12.h"
+#include "fonts/Overpass_Regular16.h"
+
 namespace
 {
   // store 7 departures at a time
@@ -20,6 +23,7 @@ Configuration::~Configuration()
   {
     delete m_zones[i];
   }
+  delete m_zoneListDisplayer;
 }
 
 void Configuration::init()
@@ -49,15 +53,24 @@ void Configuration::init()
                                      zone.lon,
                                      zone.radius,
                                      m_caller,
-                                     &m_retriever,
+                                     &m_timeRetriever,
                                      DEFAULT_TRANSIT_ZONE_CONFIG);
     m_zones.push_back(z);
   }
+
+  // fonts
+  m_regularFont = Overpass_Regular12;
+  m_titleFont = Overpass_Regular16;
+
+  // displayer
+  m_zoneListDisplayer = new ZoneListDisplayer(&m_tft, m_regularFont, m_titleFont);
 }
 
-const std::vector<TransitZone *> Configuration::getZones() const { return m_zones; }
-const TimeRetriever *Configuration::getTimeRetriever() const { return &m_retriever; }
-const APICaller *Configuration::getCaller() const { return m_caller; }
+std::vector<TransitZone *> Configuration::getZones() const { return m_zones; }
+TimeRetriever *Configuration::getTimeRetriever() { return &m_timeRetriever; }
+APICaller *Configuration::getCaller() const { return m_caller; }
+TFT_eSPI *Configuration::getTFT() { return &m_tft; }
+ZoneListDisplayer *Configuration::getZoneListDisplayer() { return m_zoneListDisplayer; }
 
 const Whitelist Configuration::getWhitelist() const { return m_whitelist; }
 const std::string Configuration::getSSID() const { return m_ssid; }

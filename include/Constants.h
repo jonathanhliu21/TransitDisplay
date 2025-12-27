@@ -17,6 +17,8 @@ namespace Constants
   inline constexpr int STOP_ERROR_PIN = 25;
   inline constexpr int DEPARTURE_ERROR_PIN = 26;
   inline constexpr int RATE_LIMIT_PIN = 27;
+  inline constexpr int BUTTON_1_PIN = 35;
+  inline constexpr int BUTTON_2_PIN = 34;
 
   inline constexpr int MAX_PAGES_PROCESSED = 5;
 

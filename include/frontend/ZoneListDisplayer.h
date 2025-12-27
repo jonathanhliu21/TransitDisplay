@@ -2,7 +2,9 @@
 #define ZONE_LIST_DISPLAYER_H
 
 #include <TFT_eSPI.h>
-#include <backend/TransitZone.h>
+
+#include "backend/TransitZone.h"
+#include "types/Whitelist.h"
 
 class ZoneListDisplayer
 {
@@ -13,7 +15,7 @@ public:
 
   void drawConnecting();
   void drawNoZonesFound();
-  void drawZone(TransitZone *zone, TransitZone *next);
+  void drawZone(TransitZone *zone, TransitZone *next, const Whitelist &wl);
 
 private:
   TFT_eSPI *m_tft;

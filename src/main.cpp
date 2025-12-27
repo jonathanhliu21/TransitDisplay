@@ -2,39 +2,53 @@
 #include <WiFi.h>
 #include <TFT_eSPI.h>
 
-#include "secrets.h"
-#include "types/Whitelist.h"
-#include "backend/TimeRetriever.h"
-#include "backend/APICaller.h"
-#include "backend/TransitZone.h"
-#include "frontend/TransitZoneDisplayer.h"
-#include "fonts/Overpass_Regular12.h"
-#include "fonts/Overpass_Regular16.h"
+#include "Configuration.h"
+#include "Constants.h"
 #include "ZoneManager.h"
+#include "ButtonReader.h"
 
-const std::vector<std::string> whitelistV = {
-    "o-9q9-bart",
-    "o-9q9-caltrain", "o-9q5-metro~losangeles", "o-9q5c-bigbluebus", "o-dr5r-nyct"};
-TimeRetriever timeR;
-Whitelist whitelist(whitelistV);
-APICaller apiCaller(Secrets::SECRET_API_KEY);
-TFT_eSPI tft;
-TransitZoneDisplayer displayer{
-    "Test",
-    &tft,
-    Overpass_Regular12,
-    Overpass_Regular16,
-    5000,
-    10000};
+enum class State
+{
+  SELECT,
+  ARE_YOU_SURE,
+  TRANSIT
+};
 
-TransitZone zone{"WWRP", 34.03681632305407, -118.42457036391623, 100, &apiCaller, &timeR, {5, 6000, 60}};
-ZoneManager *manager;
+Configuration config;
+ZoneManager *zoneManager;
+int zoneIdx = 0;
+State state(State::SELECT);
+ZoneListDisplayer *displayer;
+TFT_eSPI *tft;
+TimeRetriever *timeRetriever;
+Whitelist whitelist;
+
+ButtonReader reader1(Constants::BUTTON_1_PIN);
+ButtonReader reader2(Constants::BUTTON_2_PIN);
+
+std::vector<TransitZone *> zones;
+
+void configurePins()
+{
+  pinMode(Constants::ROUTE_ERROR_PIN, OUTPUT);
+  pinMode(Constants::STOP_ERROR_PIN, OUTPUT);
+  pinMode(Constants::DEPARTURE_ERROR_PIN, OUTPUT);
+  pinMode(Constants::RATE_LIMIT_PIN, OUTPUT);
+
+  pinMode(Constants::BUTTON_1_PIN, INPUT);
+  pinMode(Constants::BUTTON_2_PIN, INPUT);
+
+  digitalWrite(Constants::ROUTE_ERROR_PIN, LOW);
+  digitalWrite(Constants::STOP_ERROR_PIN, LOW);
+  digitalWrite(Constants::DEPARTURE_ERROR_PIN, LOW);
+  digitalWrite(Constants::RATE_LIMIT_PIN, LOW);
+}
 
 void connectToWifi()
 {
   Serial.print("Attempting to connect to SSID: ");
-  Serial.println(Secrets::SECRET_SSID);
-  WiFi.begin(Secrets::SECRET_SSID, Secrets::SECRET_PASSWORD);
+  Serial.println(config.getSSID().c_str());
+  WiFi.begin(config.getSSID().c_str(), config.getWifiPassword().c_str());
 
   // attempt to connect to Wifi network:
   while (WiFi.status() != WL_CONNECTED)
@@ -44,25 +58,86 @@ void connectToWifi()
     delay(1000);
   }
   Serial.print("Connected to ");
-  Serial.println(Secrets::SECRET_SSID);
+  Serial.println(config.getSSID().c_str());
 }
 
 void setup()
 {
   // put your setup code here, to run once:
   Serial.begin(115200);
-  tft.begin();
-  tft.setRotation(1); // Depending of the use-case.
 
+  // configure globals
+  config.init();
+  zones = config.getZones();
+  displayer = config.getZoneListDisplayer();
+  tft = config.getTFT();
+  timeRetriever = config.getTimeRetriever();
+  whitelist = config.getWhitelist();
+
+  // configure pins
+  configurePins();
+
+  // configure tft
+  tft->begin();
+  tft->setRotation(1); // Depending on the use-case.
+
+  // connect to wifi
+  displayer->drawConnecting();
   connectToWifi();
-  timeR.sync();
 
-  manager = new ZoneManager(&zone, &tft, &timeR, whitelist, Overpass_Regular12, Overpass_Regular16);
-  manager->init();
+  // sync time
+  timeRetriever->sync();
+
+  // draw screen
+  if (zones.empty())
+  {
+    displayer->drawNoZonesFound();
+  }
+  else if (zones.size() == 1)
+  {
+    displayer->drawZone(zones[0], nullptr, whitelist);
+  }
+  else
+  {
+    displayer->drawZone(zones[0], zones[1], whitelist);
+  }
 }
 
 void loop()
 {
-  manager->mainThreadLoop();
-  delay(10);
+  // put your main code here, to run repeatedly:
+  if (zones.empty())
+    return;
+
+  bool button1Res = reader1.readButton();
+  bool button2Res = reader2.readButton();
+  unsigned long curMs = millis();
+
+  switch (state)
+  {
+  case State::SELECT:
+    digitalWrite(Constants::ROUTE_ERROR_PIN, LOW);
+    digitalWrite(Constants::STOP_ERROR_PIN, LOW);
+    digitalWrite(Constants::DEPARTURE_ERROR_PIN, LOW);
+    digitalWrite(Constants::RATE_LIMIT_PIN, LOW);
+    // if (button1Res)
+    // {
+    //   bridge.setZone(zones[curIndex], curMs, retrieveCurTime());
+    //   state = State::TRANSIT;
+    // }
+    if (button2Res && zones.size() > 1)
+    {
+      zoneIdx++;
+      if (zoneIdx >= zones.size())
+        zoneIdx = 0;
+
+      int nextZoneIdx = zoneIdx + 1;
+      if (nextZoneIdx >= zones.size())
+        nextZoneIdx = 0;
+      displayer->drawZone(zones[zoneIdx], zones[nextZoneIdx], whitelist);
+    }
+    break;
+  default:
+    break;
+  }
 }

@@ -49,7 +49,7 @@ void ZoneListDisplayer::drawNoZonesFound()
   m_tft->unloadFont();
 }
 
-void ZoneListDisplayer::drawZone(TransitZone *zone, TransitZone *next)
+void ZoneListDisplayer::drawZone(TransitZone *zone, TransitZone *next, const Whitelist &wl)
 {
   // draw the title
   m_tft->fillScreen(TFT_BLACK);
@@ -76,7 +76,6 @@ void ZoneListDisplayer::drawZone(TransitZone *zone, TransitZone *next)
   m_tft->setCursor(FILTER_CURSOR_X, FILTER_CURSOR_Y);
   m_tft->setTextColor(TFT_WHITE);
   String concatResult = "Onestop ID Filter: ";
-  Whitelist wl = zone->getWhitelist();
   if (wl.isActive())
   {
     concatResult += wl.getWhiteListStr().c_str();
@@ -84,8 +83,8 @@ void ZoneListDisplayer::drawZone(TransitZone *zone, TransitZone *next)
   }
   else
   {
+    concatResult += "No filter in use";
   }
-  concatResult += "No filter in use";
   m_tft->print(concatResult);
 
   // draw the controls

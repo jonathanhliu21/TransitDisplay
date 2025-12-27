@@ -21,7 +21,7 @@ UserTransitZoneList userTransitZoneList = {
     {"7th St / Metro Center", 34.0489, -118.2588, 100},
 };
 
-// set userWhiteListActive to false if you don't want to use a filter
+// set userWhiteListActive to false if you don't want to use a filter (whitelist)
 // e.g. you want ALL operators to be included in the search radius provided
 // It is **highly** recommended to use a filter to avoid long initialization times
 // as transit.land API can be quite slow.
