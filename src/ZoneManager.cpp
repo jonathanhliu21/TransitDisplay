@@ -60,9 +60,9 @@ void ZoneManager::init()
   if (!m_zone->isInitialized())
   {
     m_zone->init(m_whitelist);
-    m_displayer.setRoutes(
-        Filter::modifyRoutes(m_zone->getRoutes().getDisplayRouteList()));
   }
+  m_displayer.setRoutes(
+      Filter::modifyRoutes(m_zone->getRoutes().getDisplayRouteList()));
 
   m_zone->callDeparturesAPI();
   std::vector<DisplayDeparture> displayDepartureList = m_zone->getDepartures().getDisplayDepartureList(

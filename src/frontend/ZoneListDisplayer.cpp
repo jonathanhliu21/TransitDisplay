@@ -111,6 +111,7 @@ void ZoneListDisplayer::drawZone(TransitZone *zone, TransitZone *next, const Whi
     }
     else
     {
+      m_tft->setTextWrap(false);
       // If it doesn't fit, we must truncate it
       String ellipsisSuffix = "...)";
 
@@ -127,6 +128,7 @@ void ZoneListDisplayer::drawZone(TransitZone *zone, TransitZone *next, const Whi
       // 3. Construct and draw the final, truncated string
       String displayText = prefix + truncatedName + ellipsisSuffix;
       m_tft->drawString(displayText, startX, SELECT_INSTRUCTION_Y);
+      m_tft->setTextWrap(true);
     }
   }
   else
