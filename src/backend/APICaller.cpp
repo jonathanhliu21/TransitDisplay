@@ -44,7 +44,7 @@ namespace
   const char *TRANSIT_LAND_KEYS[] = {"Transfer-Encoding"};
   const int TRANSIT_LAND_PORT = 443;
 
-  const int HTTP_CLIENT_TIMEOUT = 10000; // ms
+  const int HTTP_CLIENT_TIMEOUT = 20000; // ms
 
   // const int HTTP_CODE_SUCCESS = 200;
 }
