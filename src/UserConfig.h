@@ -17,8 +17,14 @@
 // Radius units are in **meters**
 //   Name               , Latitude , Longitude  , Radius (m)
 UserTransitZoneList userTransitZoneList = {
-    {"Westwood / Weyburn", 34.062591, -118.445390, 100},
-    {"7th St / Metro Center", 34.0489, -118.2588, 100},
+
+    {"Montgomery", 37.789323243900085, -122.40135250129704, 100},      // Financial Dist. San Francisco
+    {"Westwood / Weyburn", 34.062591, -118.445390, 100},               // Westwood, Los Angeles
+    {"7th St / Metro Center", 34.0489, -118.2588, 100},                // Downtown LA
+    {"Times Sq-42 St", 40.75519779257256, -73.98687885217348, 100},    // Times Square, New York
+    {"Westlake", 47.61161369567222, -122.33667514831642, 100},         // Downtown Seattle
+    {"Downtown Crossing", 42.35548291630822, -71.06034670033964, 100}, // Downtown Boston
+    {"Clark/Lake", 41.88567545397383, -87.63141011522981, 100}         // Chicago Loop
 };
 
 // set userWhiteListActive to false if you don't want to use a filter (whitelist)
@@ -29,14 +35,15 @@ bool userWhiteListActive = true;
 
 // put vector of strings of onestop IDs of transit land **operators**
 // Operators can be found here: https://www.transit.land/operators
-// Example below includes LA Metro and Metrolink in Greater LA and BART and Caltrain in SF Bay Area
 std::vector<std::string> userWhiteList = {
-    "o-9q5-metro~losangeles",
-    "o-9qh-metrolinktrains",
-    "o-9q9-bart",
-    "o-9q9-caltrain",
-    "o-dr5r-nyct",
-    "o-c23-soundtransit"};
+    "o-9q9-bart",                   // BART (SF Bay Area)
+    "o-9q8y-sfmta",                 // SFMTA (San Francisco)
+    "o-9q5-metro~losangeles",       // LA Metro (Los Angeles)
+    "o-dr5r-nyct",                  // MTA (New York City)
+    "o-c23-soundtransit",           // Sound Transit (Seattle)
+    "o-drt-mbta",                   // MBTA (Boston)
+    "o-dp3-chicagotransitauthority" // CTA (Chicago)
+};
 
 // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
