@@ -50,7 +50,6 @@ void TransitZone::init()
 void TransitZone::init(const Whitelist &whitelist)
 {
   clearDepartures();
-  m_isInitialized = true;
 
   RouteRetriever routeRetriever{m_caller, m_lat, m_lon, m_radius, whitelist};
   StopRetriever stopRetriever{m_caller, m_lat, m_lon, m_radius, whitelist};
@@ -82,6 +81,7 @@ void TransitZone::init(const Whitelist &whitelist)
 
   m_status = TransitZoneStatus::IDLE;
   m_whitelist = whitelist;
+  m_isInitialized = true;
 }
 
 void TransitZone::callDeparturesAPI()

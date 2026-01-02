@@ -179,6 +179,10 @@ void DeparturesDisplayer::updateDepartureMins()
   {
     m_departures[i].mins -= (millis() - m_lastUpdated) / 60000;
   }
+  if ((millis() - m_lastUpdated) / 60000 > 0)
+  {
+    m_lastUpdated = millis();
+  }
 
   // don't perfrom unnecessary copying if all minutes are positive
   if (m_departures.empty() || m_departures.front().mins >= 0)
